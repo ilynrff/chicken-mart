@@ -1,0 +1,310 @@
+import { createSeedData } from "@/lib/mock-data";
+import type {
+  BootstrapData,
+  CreateDebtInput,
+  CreateTransactionInput,
+  Debt,
+  Product,
+  ProductInput,
+  StoreProfile,
+  StoreSettings,
+  Transaction,
+} from "@/lib/types";
+import { createId } from "@/lib/utils";
+
+const STORAGE_KEY = "chicken-mart-bootstrap-retail-v2";
+
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function wait(ms = 180) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function readState(): BootstrapData {
+  if (typeof window === "undefined") {
+    return createSeedData();
+  }
+
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    const seeded = createSeedData();
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+    return seeded;
+  }
+
+  return JSON.parse(raw) as BootstrapData;
+}
+
+function writeState(next: BootstrapData) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+}
+
+function ensureProduct(state: BootstrapData, productId: string): Product {
+  const product = state.products.find((item) => item.id === productId);
+  if (!product) {
+    throw new Error("Produk tidak ditemukan.");
+  }
+
+  return product;
+}
+
+export const mockApi = {
+  async getBootstrap() {
+    await wait();
+    return clone(readState());
+  },
+
+  async createTransaction(input: CreateTransactionInput) {
+    await wait(240);
+    const state = readState();
+
+    if (!input.items.length) {
+      throw new Error("Keranjang masih kosong.");
+    }
+
+    const transactionItems = input.items.map((item) => {
+      const product = ensureProduct(state, item.productId);
+
+      if (item.qty <= 0) {
+        throw new Error(`Jumlah untuk ${product.name} tidak valid.`);
+      }
+
+      if (product.stock < item.qty) {
+        throw new Error(`Stok ${product.name} tidak cukup.`);
+      }
+
+      return {
+        productId: product.id,
+        productName: product.name,
+        buyPrice: product.buyPrice,
+        sellPrice: product.sellPrice,
+        qty: item.qty,
+        subtotal: item.qty * product.sellPrice,
+      };
+    });
+
+    const transaction: Transaction = {
+      id: createId("trx"),
+      createdAt: new Date().toISOString(),
+      paymentMethod: input.paymentMethod,
+      total: transactionItems.reduce((sum, item) => sum + item.subtotal, 0),
+      items: transactionItems,
+    };
+
+    const nextState: BootstrapData = {
+      ...state,
+      products: state.products.map((product) => {
+        const item = input.items.find((entry) => entry.productId === product.id);
+        if (!item) {
+          return product;
+        }
+
+        return {
+          ...product,
+          stock: product.stock - item.qty,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+      transactions: [transaction, ...state.transactions],
+    };
+
+    writeState(nextState);
+    return clone(transaction);
+  },
+
+  async createProduct(input: ProductInput) {
+    await wait();
+    const state = readState();
+
+    if (!input.name.trim()) {
+      throw new Error("Nama produk wajib diisi.");
+    }
+
+    if (input.sellPrice <= 0 || input.buyPrice < 0) {
+      throw new Error("Harga produk tidak valid.");
+    }
+
+    const now = new Date().toISOString();
+    const product: Product = {
+      id: createId("prd"),
+      name: input.name.trim(),
+      category: input.category.trim() || "Lainnya",
+      buyPrice: input.buyPrice,
+      sellPrice: input.sellPrice,
+      stock: Math.max(0, input.stock),
+      minimumStock: Math.max(0, input.minimumStock),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const nextState = {
+      ...state,
+      products: [product, ...state.products],
+    };
+
+    writeState(nextState);
+    return clone(product);
+  },
+
+  async updateProduct(id: string, input: ProductInput) {
+    await wait();
+    const state = readState();
+    let found = false;
+
+    if (!input.name.trim()) {
+      throw new Error("Nama produk wajib diisi.");
+    }
+
+    if (input.sellPrice <= 0 || input.buyPrice < 0) {
+      throw new Error("Harga produk tidak valid.");
+    }
+
+    const nextState = {
+      ...state,
+      products: state.products.map((product) => {
+        if (product.id !== id) {
+          return product;
+        }
+
+        found = true;
+        return {
+          ...product,
+          ...input,
+          stock: Math.max(0, input.stock),
+          minimumStock: Math.max(0, input.minimumStock),
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    };
+
+    if (!found) {
+      throw new Error("Produk tidak ditemukan.");
+    }
+
+    writeState(nextState);
+  },
+
+  async restockProduct(id: string, qty: number) {
+    await wait();
+    const state = readState();
+
+    if (qty <= 0) {
+      throw new Error("Jumlah restock harus lebih dari 0.");
+    }
+
+    let found = false;
+    const nextState = {
+      ...state,
+      products: state.products.map((product) => {
+        if (product.id !== id) {
+          return product;
+        }
+
+        found = true;
+        return {
+          ...product,
+          stock: product.stock + qty,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    };
+
+    if (!found) {
+      throw new Error("Produk tidak ditemukan.");
+    }
+
+    writeState(nextState);
+  },
+
+  async createDebt(input: CreateDebtInput) {
+    await wait();
+    const state = readState();
+
+    if (!input.customerName.trim()) {
+      throw new Error("Nama pelanggan wajib diisi.");
+    }
+
+    if (input.amount <= 0) {
+      throw new Error("Nominal hutang harus lebih dari 0.");
+    }
+
+    const now = new Date().toISOString();
+    const debt: Debt = {
+      id: createId("debt"),
+      customerName: input.customerName.trim(),
+      phone: input.phone.trim(),
+      amount: input.amount,
+      dueDate: input.dueDate,
+      note: input.note.trim(),
+      status: "aktif",
+      reminderCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const nextState = {
+      ...state,
+      debts: [debt, ...state.debts],
+    };
+
+    writeState(nextState);
+    return clone(debt);
+  },
+
+  async updateDebt(
+    id: string,
+    updates: Partial<Pick<Debt, "status" | "note" | "phone" | "dueDate" | "customerName" | "amount" | "reminderCount">>,
+  ) {
+    await wait();
+    const state = readState();
+    let found = false;
+
+    const nextState = {
+      ...state,
+      debts: state.debts.map((debt) => {
+        if (debt.id !== id) {
+          return debt;
+        }
+
+        found = true;
+        return {
+          ...debt,
+          ...updates,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    };
+
+    if (!found) {
+      throw new Error("Data hutang tidak ditemukan.");
+    }
+
+    writeState(nextState);
+  },
+
+  async updateSettings(input: { profile: StoreProfile; settings: StoreSettings }) {
+    await wait();
+    const state = readState();
+
+    const nextState = {
+      ...state,
+      profile: input.profile,
+      settings: input.settings,
+    };
+
+    writeState(nextState);
+  },
+
+  async resetWorkspace() {
+    await wait(250);
+    const seeded = createSeedData();
+    writeState(seeded);
+    return clone(seeded);
+  },
+};
