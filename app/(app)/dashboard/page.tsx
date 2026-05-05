@@ -1,27 +1,26 @@
 "use client";
 
+import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowUpRight,
   Banknote,
-  ClipboardList,
-  PackageSearch,
-  ShoppingBag,
-  Sparkles,
+  Box,
+  ChevronRight,
+  Clock,
+  CreditCard,
+  Package,
+  Receipt,
+  ShoppingCart,
   TrendingUp,
+  Wallet,
+  Activity
 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useData } from "@/components/providers/data-provider";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { getDashboardMetrics, getReportSummary } from "@/lib/selectors";
-import { cn, formatCurrency, formatDateTime, formatNumber } from "@/lib/utils";
-
-const insightToneStyles = {
-  positive: "border-emerald-200 bg-emerald-50/85 text-emerald-900",
-  warning: "border-amber-200 bg-amber-50/90 text-amber-900",
-  neutral: "border-slate-200 bg-slate-50/90 text-slate-900",
-} as const;
+import { cn, formatCurrency, formatDateTime } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data } = useData();
@@ -32,289 +31,251 @@ export default function DashboardPage() {
 
   const metrics = getDashboardMetrics(data);
   const weeklyReport = getReportSummary(data, "mingguan");
-  const cards = [
+
+  const kpiCards = [
     {
-      title: "Omzet hari ini",
-      value: formatCurrency(metrics.omzetHariIni),
-      description: `${metrics.transaksiHariIni} transaksi tercatat`,
-      icon: Banknote,
-      accent: "from-red-500/15 via-red-50 to-white",
+      title: "Transaksi Hari Ini",
+      value: `${metrics.transaksiHariIni} transaksi`,
+      icon: Receipt,
+      glowColor: "group-hover:text-blue-400 group-hover:shadow-[0_0_15px_rgba(96,165,250,0.5)]",
+      iconBg: "bg-blue-500/10 text-blue-400",
     },
     {
-      title: "Stok menipis",
-      value: formatNumber(metrics.stokMenipis),
-      description: `${metrics.stokHabis} produk sudah habis`,
-      icon: PackageSearch,
-      accent: "from-amber-400/20 via-orange-50 to-white",
+      title: "Stok Bermasalah",
+      value: `${metrics.stokMenipis} item`,
+      icon: Package,
+      glowColor: "group-hover:text-red-400 group-hover:shadow-[0_0_15px_rgba(248,113,113,0.5)]",
+      iconBg: "bg-red-500/10 text-red-400",
     },
     {
-      title: "Kasbon aktif",
+      title: "Kasbon Aktif",
       value: formatCurrency(metrics.totalKasbon),
-      description: `${metrics.pelangganKasbonAktif} pelanggan`,
-      icon: ClipboardList,
-      accent: "from-rose-500/15 via-rose-50 to-white",
-    },
-    {
-      title: "Omzet minggu berjalan",
-      value: formatCurrency(metrics.omzetMingguBerjalan),
-      description: metrics.produkTerlarisMinggu
-        ? `${metrics.produkTerlarisMinggu.productName} paling diminati`
-        : "Menunggu transaksi minggu ini",
-      icon: ShoppingBag,
-      accent: "from-red-500/10 via-orange-50 to-white",
+      icon: Wallet,
+      glowColor: "group-hover:text-amber-400 group-hover:shadow-[0_0_15px_rgba(251,191,36,0.5)]",
+      iconBg: "bg-amber-500/10 text-amber-400",
     },
   ];
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="overflow-hidden border-white/70 bg-gradient-to-br from-white via-red-50/85 to-red-100/80 shadow-[0_26px_80px_-48px_rgba(220,38,38,0.55)]">
-          <CardContent className="grid gap-6 p-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
-            <div>
-              <Badge className="mb-4 w-fit border-red-200 bg-white/80 text-primary" variant="outline">
-                Dashboard insight
-              </Badge>
-              <h2 className="text-3xl font-black leading-tight text-slate-950">
-                Angka penting warung kini terasa lebih hidup, lebih cepat dibaca, dan lebih mudah ditindaklanjuti.
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-                Pantau omzet hari ini, ritme transaksi, produk paling diminati, dan area yang perlu perhatian tanpa harus
-                pindah halaman lebih dulu.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <div className="rounded-2xl border border-white/80 bg-white/75 px-4 py-3 text-sm shadow-sm">
-                  <p className="text-muted-foreground">Workspace</p>
-                  <p className="font-semibold text-slate-950">{data.workspace.name}</p>
-                </div>
-                <div className="rounded-2xl border border-white/80 bg-white/75 px-4 py-3 text-sm shadow-sm">
-                  <p className="text-muted-foreground">Metode aktif</p>
-                  <p className="font-semibold text-slate-950">{data.settings.enabledPaymentMethods.join(", ")}</p>
-                </div>
-                <div className="rounded-2xl border border-white/80 bg-white/75 px-4 py-3 text-sm shadow-sm">
-                  <p className="text-muted-foreground">Minimum stok</p>
-                  <p className="font-semibold text-slate-950">{data.settings.defaultMinimumStock} item</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-3 rounded-[30px] border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-              <div className="rounded-[24px] bg-gradient-to-br from-primary to-red-500 p-5 text-primary-foreground shadow-[0_18px_50px_-28px_rgba(220,38,38,0.7)]">
-                <p className="text-xs uppercase tracking-[0.18em] text-primary-foreground/80">Fokus hari ini</p>
-                <p className="mt-3 text-4xl font-black">{formatCurrency(metrics.omzetHariIni)}</p>
-                <p className="mt-2 text-sm text-primary-foreground/85">{metrics.transaksiHariIni} transaksi sudah masuk hari ini.</p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                <div className="rounded-[24px] border border-red-100 bg-red-50/70 p-4">
-                  <p className="text-sm text-muted-foreground">Rata-rata belanja hari ini</p>
-                  <p className="mt-1 text-xl font-bold text-slate-950">{formatCurrency(metrics.avgBelanjaHariIni)}</p>
-                </div>
-                <div className="rounded-[24px] border border-red-100 bg-white p-4">
-                  <p className="text-sm text-muted-foreground">Produk terlaris minggu ini</p>
-                  <p className="mt-1 text-lg font-bold text-slate-950">
-                    {metrics.produkTerlarisMinggu?.productName ?? "Belum ada data"}
-                  </p>
-                  <p className="mt-1 text-sm text-primary">
-                    {metrics.produkTerlarisMinggu
-                      ? `${formatNumber(metrics.produkTerlarisMinggu.qty)} item terjual`
-                      : "Transaksi minggu ini belum cukup untuk dibaca."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="overflow-hidden border-white/70 bg-slate-950 text-white shadow-[0_30px_80px_-45px_rgba(15,23,42,0.8)]">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between gap-3">
+      {/* Top Grid: Main Chart & Insight */}
+      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        
+        {/* 3. MAIN DASHBOARD CARD */}
+        <div className="glass-card flex flex-col overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
+            <Activity className="size-32 text-red-500 blur-3xl" />
+          </div>
+          
+          <div className="p-6 relative z-10 border-b border-white/5">
+            <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-white/70">Ritme penjualan</p>
-                <p className="mt-2 text-3xl font-black">7 hari terakhir</p>
+                <p className="text-sm font-medium text-slate-400 mb-1">Omzet Hari Ini</p>
+                <h3 className="text-4xl font-black text-white tracking-tight">{formatCurrency(metrics.omzetHariIni)}</h3>
               </div>
-              <div className="rounded-2xl bg-white/10 p-3 text-white">
-                <TrendingUp className="size-5" />
+              <div className="flex items-center gap-2 bg-red-500/10 px-3 py-1.5 rounded-full border border-red-500/20">
+                <TrendingUp className="size-4 text-red-400" />
+                <span className="text-xs font-medium text-red-400">Trend Aktif</span>
               </div>
             </div>
-            <div className="mt-5 h-[220px] rounded-[28px] border border-white/10 bg-white/5 p-3">
-              {weeklyReport.revenueSeries.length ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={weeklyReport.revenueSeries} margin={{ top: 8, right: 4, left: -14, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="dashboardWeeklyOmzet" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="5%" stopColor="#fb7185" stopOpacity={0.55} />
-                        <stop offset="95%" stopColor="#fb7185" stopOpacity={0.04} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: "#fca5a5", fontSize: 12 }} />
-                    <YAxis tickLine={false} axisLine={false} tick={{ fill: "#fecaca", fontSize: 12 }} tickFormatter={(value: number) => `${Math.round(value / 1000)}k`} />
-                    <Tooltip
-                      cursor={{ stroke: "rgba(255,255,255,0.12)", strokeWidth: 1 }}
-                      contentStyle={{
-                        backgroundColor: "#111827",
-                        borderRadius: 18,
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#fff",
-                      }}
-                      formatter={(value) => [formatCurrency(typeof value === "number" ? value : Number(value ?? 0)), "Omzet"]}
-                    />
-                    <Area type="monotone" dataKey="omzet" stroke="#fb7185" strokeWidth={3} fill="url(#dashboardWeeklyOmzet)" />
-                  </AreaChart>
-                </ResponsiveContainer>
+          </div>
+          
+          <div className="p-6 flex-1 min-h-[300px]">
+            {weeklyReport.revenueSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={weeklyReport.revenueSeries} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorOmzetRed" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#e53935" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#e53935" stopOpacity={0} />
+                    </linearGradient>
+                    <filter id="glowLine">
+                      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                      <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} tickFormatter={(value) => `${value / 1000}k`} />
+                  <Tooltip
+                    contentStyle={{ 
+                      backgroundColor: "rgba(20, 20, 25, 0.8)", 
+                      backdropFilter: "blur(12px)",
+                      borderRadius: "12px", 
+                      border: "1px solid rgba(255,255,255,0.1)", 
+                      boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                      color: "#fff"
+                    }}
+                    formatter={(value: number) => [formatCurrency(value), "Omzet"]}
+                  />
+                  <Area 
+                    type="natural" 
+                    dataKey="omzet" 
+                    stroke="#e53935" 
+                    strokeWidth={3} 
+                    fillOpacity={1} 
+                    fill="url(#colorOmzetRed)" 
+                    style={{ filter: "url(#glowLine)" }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center border border-dashed border-white/10 rounded-xl">
+                <p className="text-sm font-medium text-slate-500">Belum ada data penjualan minggu ini.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          {/* 6. INSIGHT PANEL */}
+          <div className="glass-card glow-red-border border relative overflow-hidden flex-shrink-0">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/20 blur-3xl pointer-events-none rounded-full" />
+            <div className="p-5">
+              <h4 className="text-sm font-bold text-red-400 flex items-center gap-2 mb-4 uppercase tracking-wider">
+                <AlertTriangle className="size-4" /> Insight Penting
+              </h4>
+              <div className="space-y-3">
+                {metrics.insights.map((insight, idx) => (
+                  <div key={idx} className="bg-white/5 border border-white/5 rounded-xl p-4 backdrop-blur-md">
+                    <p className="text-sm font-semibold text-white">{insight.title}</p>
+                    <p className="mt-1 text-xs text-slate-400 leading-relaxed">{insight.description}</p>
+                  </div>
+                ))}
+                {metrics.insights.length === 0 && (
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-4 backdrop-blur-md">
+                    <p className="text-sm font-semibold text-white">Semua Terkendali</p>
+                    <p className="mt-1 text-xs text-slate-400">Belum ada insight darurat hari ini.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 4. KPI MINI CARDS */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-4">
+            {kpiCards.map((kpi, i) => (
+              <div key={i} className="glass-card glass-card-hover p-4 group cursor-pointer flex items-center gap-4">
+                <div className={cn("flex size-12 items-center justify-center rounded-xl transition-all duration-300", kpi.iconBg, kpi.glowColor)}>
+                  <kpi.icon className="size-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">{kpi.title}</p>
+                  <p className="text-lg font-bold text-white mt-0.5">{kpi.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Grid: Transactions & Stock */}
+      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        
+        {/* 7. RECENT TRANSACTIONS */}
+        <div className="glass-card flex flex-col">
+          <div className="p-6 border-b border-white/5 flex items-center justify-between">
+            <div>
+              <h4 className="text-lg font-bold text-white">Transaksi Terbaru</h4>
+              <p className="text-sm text-slate-400 mt-1">Aktivitas kasir hari ini</p>
+            </div>
+            <Button asChild variant="ghost" size="sm" className="text-slate-400 hover:text-white hover:bg-white/5">
+              <Link href="/laporan">
+                Lihat Semua <ChevronRight className="ml-1 size-4" />
+              </Link>
+            </Button>
+          </div>
+          <div className="p-2">
+            {metrics.recentTransactions.length > 0 ? (
+              <div className="space-y-1">
+                {metrics.recentTransactions.map((transaction) => (
+                  <div key={transaction.id} className="glass-card-hover flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl hover:bg-white/5 transition-colors gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-slate-300">
+                        <ShoppingCart className="size-4" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white text-sm">{transaction.items.map(i => i.productName).join(", ")}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Clock className="size-3 text-slate-500" />
+                          <span className="text-xs text-slate-400">
+                            {formatDateTime(transaction.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
+                        {transaction.paymentMethod === "tunai" ? <Banknote className="mr-1.5 size-3.5 text-emerald-400" /> : <CreditCard className="mr-1.5 size-3.5 text-blue-400" />}
+                        <span className="text-xs font-medium text-slate-300 capitalize">{transaction.paymentMethod}</span>
+                      </div>
+                      <p className="font-bold text-white w-24 text-right text-base">{formatCurrency(transaction.total)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="rounded-full bg-white/5 p-4 mb-3 border border-white/10">
+                  <Receipt className="size-6 text-slate-500" />
+                </div>
+                <p className="text-sm font-medium text-white">Belum ada transaksi</p>
+                <p className="text-xs text-slate-400 mt-1">Mulai transaksi pertama di Kasir.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 5. RIGHT PANEL: Stock Alerts */}
+        <div className="glass-card flex flex-col">
+          <div className="p-6 border-b border-white/5">
+            <h4 className="text-lg font-bold text-white flex items-center gap-2">
+              <Box className="size-5 text-amber-500" />
+              Peringatan Stok
+            </h4>
+            <p className="text-sm text-slate-400 mt-1">Produk perlu segera di-restock</p>
+          </div>
+          <div className="p-4 flex-1">
+            <div className="space-y-3">
+              {metrics.attentionProducts.length > 0 ? (
+                metrics.attentionProducts.map((product) => (
+                  <div key={product.id} className="glass-card-hover flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 transition-colors">
+                    <div className="flex-1 min-w-0 pr-3">
+                      <p className="truncate font-semibold text-white text-sm">{product.name}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className={cn(
+                          "text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider", 
+                          product.stock === 0 ? "bg-red-500/20 text-red-400 border border-red-500/30" : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                        )}>
+                          {product.stock === 0 ? "Habis" : "Menipis"}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          Sisa {product.stock}
+                        </span>
+                      </div>
+                    </div>
+                    <Button asChild size="sm" variant="outline" className="shrink-0 h-8 rounded-lg bg-transparent border-red-500/50 text-red-400 hover:bg-red-500 hover:text-white glow-red transition-all">
+                      <Link href="/inventaris">Restock</Link>
+                    </Button>
+                  </div>
+                ))
               ) : (
-                <div className="flex h-full items-center justify-center rounded-[24px] border border-dashed border-white/15 text-sm text-white/70">
-                  Belum ada transaksi untuk diringkas minggu ini.
+                <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center border border-dashed border-white/10 rounded-xl bg-white/5">
+                  <div className="rounded-full bg-emerald-500/10 p-3 mb-3 border border-emerald-500/20">
+                    <Box className="size-5 text-emerald-400" />
+                  </div>
+                  <p className="text-sm font-medium text-white">Stok Aman Terkendali</p>
+                  <p className="text-xs text-slate-400 mt-1 max-w-[200px]">Semua produk berada di atas batas minimum.</p>
                 </div>
               )}
             </div>
-            <div className="mt-4 flex items-center justify-between rounded-[24px] bg-white/5 px-4 py-3 text-sm text-white/80">
-              <span>Rata-rata transaksi mingguan</span>
-              <span className="font-semibold text-white">{formatCurrency(weeklyReport.rataRataBelanja)}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Card
-              key={item.title}
-              className="overflow-hidden border-white/70 bg-white/90 shadow-[0_18px_55px_-42px_rgba(15,23,42,0.4)]"
-            >
-              <CardContent className="p-5">
-                <div className={cn("rounded-[24px] border border-white/70 bg-gradient-to-br p-4", item.accent)}>
-                  <Icon className="size-6 text-primary" />
-                </div>
-                <p className="mt-4 text-sm text-muted-foreground">{item.title}</p>
-                <p className="mt-1 text-2xl font-bold text-slate-950">{item.value}</p>
-                <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card className="border-white/70 bg-white/90 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
-          <CardHeader className="border-b border-red-100/70 pb-4">
-            <CardTitle>Insight operasional</CardTitle>
-            <CardDescription>Highlight yang bisa langsung dipakai untuk ambil tindakan hari ini.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
-            {metrics.insights.map((insight) => (
-              <div
-                key={insight.title}
-                className={cn(
-                  "rounded-[24px] border p-4 shadow-sm transition-transform duration-200 hover:-translate-y-0.5",
-                  insightToneStyles[insight.tone],
-                )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold">{insight.title}</p>
-                    <p className="mt-2 text-xl font-black">{insight.value}</p>
-                  </div>
-                  <Sparkles className="mt-1 size-5 opacity-70" />
-                </div>
-                <p className="mt-3 text-sm leading-6 opacity-90">{insight.description}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/70 bg-white/90 shadow-[0_22px_60px_-42px_rgba(220,38,38,0.45)]">
-          <CardHeader className="border-b border-red-100/70 pb-4">
-            <CardTitle>Produk perlu perhatian</CardTitle>
-            <CardDescription>Stok sudah menyentuh batas minimum atau di bawahnya.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 p-4">
-            {metrics.attentionProducts.length ? (
-              metrics.attentionProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex items-center justify-between rounded-[24px] border border-red-100 bg-gradient-to-r from-white to-red-50/70 p-4"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-950">{product.name}</p>
-                    <p className="text-sm text-muted-foreground">{product.category}</p>
-                  </div>
-                  <Badge variant={product.stock === 0 ? "danger" : "warning"}>
-                    {product.stock} / min {product.minimumStock}
-                  </Badge>
-                </div>
-              ))
-            ) : (
-              <div className="rounded-[24px] border border-dashed border-red-200 bg-red-50/60 p-4 text-sm text-muted-foreground">
-                Semua produk masih aman.
-              </div>
-            )}
-
-            <div className="flex items-start gap-3 rounded-[24px] border border-amber-200 bg-amber-50/85 p-4 text-amber-900">
-              <AlertTriangle className="mt-1 size-5" />
-              <div>
-                <p className="font-semibold">Catatan operasional</p>
-                <p className="mt-1 text-sm leading-6">
-                  Restock produk tipis lebih dulu, terutama item yang sudah habis, supaya kasir tetap lancar saat jam ramai.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border-white/70 bg-white/90 shadow-[0_22px_60px_-42px_rgba(15,23,42,0.45)]">
-          <CardHeader className="border-b border-red-100/70 pb-4">
-            <CardTitle>Transaksi terbaru</CardTitle>
-            <CardDescription>Aktivitas penjualan paling baru di workspace ini.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 p-4">
-            {metrics.recentTransactions.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex flex-col gap-3 rounded-[24px] border border-border/80 bg-gradient-to-r from-white to-red-50/40 p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-semibold text-slate-950">{transaction.items.map((item) => item.productName).join(", ")}</p>
-                  <p className="text-sm text-muted-foreground">{formatDateTime(transaction.createdAt)}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">{transaction.paymentMethod}</Badge>
-                  <p className="font-semibold text-slate-950">{formatCurrency(transaction.total)}</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/70 bg-gradient-to-br from-slate-950 via-slate-900 to-red-950 text-white shadow-[0_26px_70px_-42px_rgba(15,23,42,0.85)]">
-          <CardContent className="p-6">
-            <p className="text-xs uppercase tracking-[0.18em] text-white/70">Quick focus</p>
-            <p className="mt-3 text-3xl font-black">{metrics.produkTerlarisMinggu?.productName ?? "Belum ada unggulan"}</p>
-            <p className="mt-2 text-sm leading-6 text-white/75">
-              {metrics.produkTerlarisMinggu
-                ? `Produk ini terjual ${formatNumber(metrics.produkTerlarisMinggu.qty)} item dengan omzet ${formatCurrency(metrics.produkTerlarisMinggu.omzet)}.`
-                : "Begitu transaksi berjalan, dashboard akan memberi sinyal produk yang paling diminati pelanggan."}
-            </p>
-            <div className="mt-6 grid gap-3">
-              <div className="rounded-[24px] bg-white/8 p-4">
-                <p className="text-sm text-white/70">Pelanggan kasbon aktif</p>
-                <p className="mt-1 text-2xl font-bold text-white">{formatNumber(metrics.pelangganKasbonAktif)}</p>
-              </div>
-              <div className="flex items-center justify-between rounded-[24px] bg-white/8 p-4">
-                <div>
-                  <p className="text-sm text-white/70">Buka laporan lengkap</p>
-                  <p className="mt-1 font-semibold text-white">Lihat tren omzet dan detail produk terjual</p>
-                </div>
-                <ArrowUpRight className="size-5 text-rose-200" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </div>
+        
+      </div>
     </div>
   );
 }
-
