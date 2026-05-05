@@ -137,13 +137,16 @@ export default function KasirPage() {
 
         {/* SEARCH & FILTER (Cleaner) */}
         <div className="flex flex-col lg:flex-row gap-3 flex-shrink-0">
-          <div className="relative flex-1 lg:max-w-md">
-            <Search className="absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 -mt-[0.5px] text-slate-400 stroke-[1.5] pointer-events-none" />
-            <Input
+          <div className="flex flex-1 lg:max-w-md items-center rounded-xl border border-white/10 bg-black/20 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-500/50 transition-all shadow-sm h-11">
+            <div className="pl-4 pr-2.5 flex items-center justify-center pointer-events-none">
+              <Search className="size-4 text-slate-400" />
+            </div>
+            <input
+              type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Cari nama barang atau kategori..."
-              className="h-11 w-full rounded-xl border-white/10 bg-black/20 pl-10 pr-4 text-sm text-white placeholder:text-slate-500 focus-visible:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50 transition-all shadow-sm"
+              className="flex-1 w-full bg-transparent text-sm text-white placeholder:text-slate-500 outline-none border-none pr-4"
             />
           </div>
 
