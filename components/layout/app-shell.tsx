@@ -101,7 +101,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 py-6 glass-panel border-x-0 border-t-0 rounded-none bg-black/20">
           <div>
             <h2 className="text-2xl font-bold text-white">Hi, {session?.fullName?.split(' ')[0] ?? "Apiip"} 👋</h2>
-            <p className="text-sm text-slate-400 mt-1">Pantau aktivitas toko hari ini</p>
+            <p className="text-sm text-slate-400 mt-1">Have a nice day</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -117,8 +117,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-8 pb-24 md:pb-8">
-          {isReady ? children : null}
+        <main className="flex-1 p-4 sm:p-8 pb-24 md:pb-8 flex flex-col">
+          {isReady ? (
+            data ? (
+              children
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center mt-12 glass-panel max-w-lg mx-auto w-full border border-white/10 rounded-2xl">
+                <Store className="size-16 text-slate-600 mb-4" />
+                <h2 className="text-xl font-bold text-white mb-2">Gagal Memuat Data</h2>
+                <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                  Terjadi masalah saat mengambil data dari server. Silakan coba muat ulang atau hubungi administrator jika masalah berlanjut.
+                </p>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  className="bg-white/10 hover:bg-white/20 text-white border border-white/10"
+                >
+                  Muat Ulang Halaman
+                </Button>
+              </div>
+            )
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="size-8 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
+            </div>
+          )}
         </main>
 
         {/* Mobile Navigation */}

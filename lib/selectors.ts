@@ -127,7 +127,7 @@ export function getDashboardMetrics(data: BootstrapData): DashboardMetrics {
   );
   const weeklySummary = getReportSummary(data, "mingguan");
   const stokHabis = data.products.filter((product) => product.stock === 0).length;
-  const pelangganKasbonAktif = data.debts.filter((debt) => debt.status === "aktif").length;
+  const pelangganKasbonAktif = data.transactions.filter((t) => t.paymentMethod === "Hutang" && t.status === "UNPAID").length;
   const avgBelanjaHariIni = todayTransactions.length
     ? todayTransactions.reduce((sum, transaction) => sum + transaction.total, 0) / todayTransactions.length
     : 0;
@@ -136,9 +136,12 @@ export function getDashboardMetrics(data: BootstrapData): DashboardMetrics {
     omzetHariIni: todayTransactions.reduce((sum, transaction) => sum + transaction.total, 0),
     transaksiHariIni: todayTransactions.length,
     stokMenipis: data.products.filter((product) => product.stock <= product.minimumStock).length,
-    totalKasbon: data.debts
-      .filter((debt) => debt.status === "aktif")
-      .reduce((sum, debt) => sum + debt.amount, 0),
+    totalKasbon: data.transactions
+      .filter((t) => t.paymentMethod === "Hutang" && t.status === "UNPAID")
+      .reduce((sum, t) => {
+        const paid = data.debtPayments.filter(dp => dp.transactionId === t.id).reduce((s, dp) => s + dp.amount, 0);
+        return sum + (t.total - paid);
+      }, 0),
     recentTransactions: [...data.transactions]
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
       .slice(0, 5),
@@ -186,7 +189,12 @@ export function getDashboardMetrics(data: BootstrapData): DashboardMetrics {
         value: `${formatNumber(pelangganKasbonAktif)} pelanggan`,
         description: pelangganKasbonAktif
           ? `Total tagihan aktif saat ini ${formatCurrency(
-              data.debts.filter((debt) => debt.status === "aktif").reduce((sum, debt) => sum + debt.amount, 0),
+              data.transactions
+                .filter((t) => t.paymentMethod === "Hutang" && t.status === "UNPAID")
+                .reduce((sum, t) => {
+                  const paid = data.debtPayments.filter(dp => dp.transactionId === t.id).reduce((s, dp) => s + dp.amount, 0);
+                  return sum + (t.total - paid);
+                }, 0),
             )}.`
           : "Tidak ada kasbon aktif, arus kas warung sedang lebih aman.",
         tone: pelangganKasbonAktif ? "warning" : "positive",
@@ -202,8 +210,15 @@ export function getReportSummary(
 ): ReportSummary {
   const range = resolveDateRange(period, options);
   const filtered = data.transactions.filter((transaction) => isInRange(transaction.createdAt, range.from, range.to));
+  const filteredDebtPayments = data.debtPayments.filter((dp) => isInRange(dp.createdAt, range.from, range.to));
 
   const omzet = filtered.reduce((sum, transaction) => sum + transaction.total, 0);
+  const pembayaranHutang = filteredDebtPayments.reduce((sum, dp) => sum + dp.amount, 0);
+  
+  // Kas Masuk = (Total Omzet - Omzet dari transaksi Hutang) + Pembayaran Hutang
+  const penjualanCash = filtered.filter(t => t.paymentMethod !== "Hutang").reduce((sum, t) => sum + t.total, 0);
+  const totalKasMasuk = penjualanCash + pembayaranHutang;
+
   const hpp = filtered.reduce(
     (sum, transaction) =>
       sum +
@@ -283,6 +298,8 @@ export function getReportSummary(
   return {
     period,
     omzet,
+    pembayaranHutang,
+    totalKasMasuk,
     hpp,
     labaKotor,
     labaBersih,

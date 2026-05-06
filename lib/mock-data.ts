@@ -1,4 +1,4 @@
-import type { BootstrapData, Debt, Product, Transaction } from "@/lib/types";
+import type { BootstrapData, DebtPayment, Product, Transaction } from "@/lib/types";
 
 function hoursAgo(hours: number) {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
@@ -82,6 +82,10 @@ const transactions: Transaction[] = [
     id: "trx-1",
     createdAt: hoursAgo(1),
     paymentMethod: "QRIS",
+    status: "PAID",
+    customerName: null,
+    customerPhone: null,
+    dueDate: null,
     total: 83000,
     items: [
       {
@@ -106,6 +110,10 @@ const transactions: Transaction[] = [
     id: "trx-2",
     createdAt: hoursAgo(5),
     paymentMethod: "Tunai",
+    status: "PAID",
+    customerName: null,
+    customerPhone: null,
+    dueDate: null,
     total: 71500,
     items: [
       {
@@ -138,6 +146,10 @@ const transactions: Transaction[] = [
     id: "trx-3",
     createdAt: daysAgo(1),
     paymentMethod: "Transfer",
+    status: "PAID",
+    customerName: null,
+    customerPhone: null,
+    dueDate: null,
     total: 49500,
     items: [
       {
@@ -162,6 +174,10 @@ const transactions: Transaction[] = [
     id: "trx-4",
     createdAt: daysAgo(3),
     paymentMethod: "Tunai",
+    status: "PAID",
+    customerName: null,
+    customerPhone: null,
+    dueDate: null,
     total: 49000,
     items: [
       {
@@ -182,33 +198,56 @@ const transactions: Transaction[] = [
       },
     ],
   },
+  {
+    id: "trx-5",
+    createdAt: daysAgo(2),
+    paymentMethod: "Hutang",
+    status: "UNPAID",
+    customerName: "Pak Dodi",
+    customerPhone: "081234567890",
+    dueDate: daysAgo(-2),
+    total: 65000,
+    items: [
+      {
+        productId: "prd-1",
+        productName: "Beras Ramos 5kg",
+        buyPrice: 68000,
+        sellPrice: 76000,
+        qty: 1,
+        subtotal: 76000,
+      }
+    ],
+  },
+  {
+    id: "trx-6",
+    createdAt: daysAgo(8),
+    paymentMethod: "Hutang",
+    status: "PAID",
+    customerName: "Bu Rina",
+    customerPhone: "081998877665",
+    dueDate: daysAgo(5),
+    total: 28000,
+    items: [
+      {
+        productId: "prd-4",
+        productName: "Sosis Sapi 375gr",
+        buyPrice: 18000,
+        sellPrice: 22500,
+        qty: 1,
+        subtotal: 22500,
+      }
+    ],
+  },
 ];
 
-const debts: Debt[] = [
+const debtPayments: DebtPayment[] = [
   {
-    id: "debt-1",
-    customerName: "Pak Dodi",
-    phone: "081234567890",
-    amount: 65000,
-    dueDate: daysAgo(-2),
-    note: "Belanja sembako dan frozen food untuk kebutuhan rumah minggu ini.",
-    status: "aktif",
-    reminderCount: 1,
-    createdAt: daysAgo(2),
-    updatedAt: hoursAgo(8),
-  },
-  {
-    id: "debt-2",
-    customerName: "Bu Rina",
-    phone: "081998877665",
+    id: "dp-1",
+    transactionId: "trx-6",
     amount: 28000,
-    dueDate: daysAgo(5),
-    note: "Belanja sosis dan mie instan, sudah janji lunas akhir pekan.",
-    status: "lunas",
-    reminderCount: 2,
-    createdAt: daysAgo(8),
-    updatedAt: daysAgo(4),
-  },
+    method: "Tunai",
+    createdAt: daysAgo(4),
+  }
 ];
 
 export function createSeedData(): BootstrapData {
@@ -224,11 +263,11 @@ export function createSeedData(): BootstrapData {
       phone: "081212341234",
     },
     settings: {
-      enabledPaymentMethods: ["Tunai", "QRIS", "Transfer"],
+      enabledPaymentMethods: ["Tunai", "QRIS", "Transfer", "Hutang"],
       defaultMinimumStock: 8,
     },
     products,
     transactions,
-    debts,
+    debtPayments,
   };
 }

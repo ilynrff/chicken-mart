@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Store,
   Trash2,
+  Package,
 } from "lucide-react";
 import { useData } from "@/components/providers/data-provider";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,9 @@ export default function KasirPage() {
   const [category, setCategory] = useState("Semua");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Tunai");
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,6 +106,10 @@ export default function KasirPage() {
       setError(`Stok ${invalidItem.product.name} tidak cukup untuk checkout.`);
       return;
     }
+    if (paymentMethod === "Hutang" && !customerName.trim()) {
+      setError("Nama pelanggan harus diisi untuk transaksi Hutang.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -109,8 +117,14 @@ export default function KasirPage() {
       const transaction = await createTransaction({
         items: cartItems.map((item) => ({ productId: item.product.id, qty: item.qty })),
         paymentMethod,
+        customerName: paymentMethod === "Hutang" ? customerName.trim() : undefined,
+        customerPhone: paymentMethod === "Hutang" && customerPhone.trim() ? customerPhone.trim() : undefined,
+        dueDate: paymentMethod === "Hutang" && dueDate ? dueDate : undefined,
       });
       setCart({});
+      setCustomerName("");
+      setCustomerPhone("");
+      setDueDate("");
       setSuccess(`Checkout berhasil. Total transaksi ${formatCurrency(transaction.total)}.`);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Checkout gagal.");
@@ -169,36 +183,46 @@ export default function KasirPage() {
         </div>
 
         {/* PRODUCT GRID */}
-        <section className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto pr-2">
-          {filteredProducts.map((product) => {
-            const isLow = product.stock <= product.minimumStock;
-            return (
-              <Card key={product.id} className="h-full flex flex-col group glass-card-hover border-white/5 bg-white/5 p-4 rounded-xl">
-                <div className="flex-1 min-w-0 mb-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">{product.category}</p>
-                  <h3 className="line-clamp-2 text-sm font-semibold text-white mb-1.5">{product.name}</h3>
-                  <p className="text-lg font-bold text-white">{formatCurrency(product.sellPrice)}</p>
-                </div>
+        {filteredProducts.length > 0 ? (
+          <section className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto pr-2">
+            {filteredProducts.map((product) => {
+              const isLow = product.stock <= product.minimumStock;
+              return (
+                <Card key={product.id} className="h-full flex flex-col group glass-card-hover border-white/5 bg-white/5 p-4 rounded-xl">
+                  <div className="flex-1 min-w-0 mb-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">{product.category}</p>
+                    <h3 className="line-clamp-2 text-sm font-semibold text-white mb-1.5">{product.name}</h3>
+                    <p className="text-lg font-bold text-white">{formatCurrency(product.sellPrice)}</p>
+                  </div>
 
-                <div className="flex items-center justify-between text-xs mb-3 border-t border-white/5 pt-3">
-                  <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold tracking-wider", isLow ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400")}>
-                    Stok: {product.stock}
-                  </span>
-                  <span className="text-slate-500">Min {product.minimumStock}</span>
-                </div>
+                  <div className="flex items-center justify-between text-xs mb-3 border-t border-white/5 pt-3">
+                    <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold tracking-wider", isLow ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400")}>
+                      Stok: {product.stock}
+                    </span>
+                    <span className="text-slate-500">Min {product.minimumStock}</span>
+                  </div>
 
-                <Button
-                  className="w-full h-10 text-xs shadow-none border-white/10 bg-white/10 text-white hover:bg-white/20 transition-all"
-                  onClick={() => addToCart(product.id)}
-                  disabled={product.stock === 0}
-                >
-                  <Plus className="size-3 mr-2" />
-                  {product.stock === 0 ? "Habis" : "Tambah"}
-                </Button>
-              </Card>
-            );
-          })}
-        </section>
+                  <Button
+                    className="w-full h-10 text-xs shadow-none border-white/10 bg-white/10 text-white hover:bg-white/20 transition-all"
+                    onClick={() => addToCart(product.id)}
+                    disabled={product.stock === 0}
+                  >
+                    <Plus className="size-3 mr-2" />
+                    {product.stock === 0 ? "Habis" : "Tambah"}
+                  </Button>
+                </Card>
+              );
+            })}
+          </section>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center xl:min-h-0 xl:flex-1">
+            <div className="rounded-full bg-white/5 p-4 mb-3 border border-white/10">
+              <Package className="size-6 text-slate-500" />
+            </div>
+            <p className="text-sm font-medium text-white">Belum ada produk</p>
+            <p className="text-xs text-slate-400 mt-1 max-w-sm">Tambahkan produk baru di halaman Inventaris agar bisa melakukan transaksi.</p>
+          </div>
+        )}
       </div>
 
       {/* CART SIDEBAR (Clean & Spaced) */}
@@ -277,6 +301,40 @@ export default function KasirPage() {
                 ))}
               </div>
             </div>
+
+            {paymentMethod === "Hutang" && (
+              <div className="space-y-3 pt-3 border-t border-white/5">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 font-medium">Nama Pelanggan <span className="text-red-400">*</span></label>
+                  <Input 
+                    value={customerName} 
+                    onChange={e => setCustomerName(e.target.value)} 
+                    placeholder="Wajib diisi"
+                    className="h-10 rounded-lg bg-black/20 border-white/10 text-white text-sm focus-visible:ring-red-500/50 focus-visible:border-red-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-400 font-medium">No. WhatsApp</label>
+                    <Input 
+                      value={customerPhone} 
+                      onChange={e => setCustomerPhone(e.target.value)} 
+                      placeholder="Opsional"
+                      className="h-10 rounded-lg bg-black/20 border-white/10 text-white text-sm focus-visible:ring-red-500/50 focus-visible:border-red-500"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-400 font-medium">Jatuh Tempo</label>
+                    <Input 
+                      type="date"
+                      value={dueDate} 
+                      onChange={e => setDueDate(e.target.value)} 
+                      className="h-10 rounded-lg bg-black/20 border-white/10 text-white text-sm focus-visible:ring-red-500/50 focus-visible:border-red-500 block w-full [color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-between items-center py-2">
               <span className="text-slate-400 font-medium text-sm">Total Bayar</span>

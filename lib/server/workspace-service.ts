@@ -1,13 +1,13 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { debts, products, transactionItems, transactions, workspaces } from "@/lib/db/schema";
+import { debtPayments, products, transactionItems, transactions, workspaces } from "@/lib/db/schema";
 import { createSeedData } from "@/lib/mock-data";
 import { HttpError } from "@/lib/server/errors";
 import type {
   BootstrapData,
-  CreateDebtInput,
+  CreateDebtPaymentInput,
   CreateTransactionInput,
-  Debt,
+  DebtPayment,
   PaymentMethod,
   Product,
   ProductInput,
@@ -23,7 +23,7 @@ type WorkspaceRow = typeof workspaces.$inferSelect;
 type ProductRow = typeof products.$inferSelect;
 type TransactionRow = typeof transactions.$inferSelect;
 type TransactionItemRow = typeof transactionItems.$inferSelect;
-type DebtRow = typeof debts.$inferSelect;
+type DebtPaymentRow = typeof debtPayments.$inferSelect;
 
 type WorkspaceSetupInput = {
   storeName?: string;
@@ -63,18 +63,13 @@ function toProduct(row: ProductRow): Product {
   };
 }
 
-function toDebt(row: DebtRow): Debt {
+function toDebtPayment(row: DebtPaymentRow): DebtPayment {
   return {
     id: row.id,
-    customerName: row.customerName,
-    phone: row.phone,
+    transactionId: row.transactionId,
     amount: row.amount,
-    dueDate: row.dueDate,
-    note: row.note,
-    status: row.status,
-    reminderCount: row.reminderCount,
+    method: row.method as PaymentMethod,
     createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
   };
 }
 
@@ -98,6 +93,10 @@ function buildTransactionList(rows: TransactionRow[], items: TransactionItemRow[
     id: row.id,
     createdAt: row.createdAt,
     paymentMethod: row.paymentMethod,
+    status: row.status,
+    customerName: row.customerName,
+    customerPhone: row.customerPhone,
+    dueDate: row.dueDate,
     total: row.total,
     items: itemMap.get(row.id) ?? [],
   }));
@@ -134,6 +133,10 @@ async function seedWorkspace(workspace: WorkspaceRow) {
     id: `${workspace.id}-${transaction.id}`,
     workspaceId: workspace.id,
     paymentMethod: transaction.paymentMethod,
+    status: transaction.status ?? "PAID",
+    customerName: transaction.customerName ?? null,
+    customerPhone: transaction.customerPhone ?? null,
+    dueDate: transaction.dueDate ?? null,
     total: transaction.total,
     createdAt: transaction.createdAt,
   }));
@@ -151,18 +154,13 @@ async function seedWorkspace(workspace: WorkspaceRow) {
     })),
   );
 
-  const debtRows = seed.debts.map((debt) => ({
-    id: `${workspace.id}-${debt.id}`,
+  const debtPaymentRows = seed.debtPayments.map((dp) => ({
+    id: `${workspace.id}-${dp.id}`,
     workspaceId: workspace.id,
-    customerName: debt.customerName,
-    phone: debt.phone,
-    amount: debt.amount,
-    dueDate: debt.dueDate,
-    note: debt.note,
-    status: debt.status,
-    reminderCount: debt.reminderCount,
-    createdAt: debt.createdAt,
-    updatedAt: debt.updatedAt,
+    transactionId: `${workspace.id}-${dp.transactionId}`,
+    amount: dp.amount,
+    method: dp.method,
+    createdAt: dp.createdAt,
   }));
 
   await db.transaction(async (tx) => {
@@ -178,8 +176,8 @@ async function seedWorkspace(workspace: WorkspaceRow) {
       await tx.insert(transactionItems).values(itemRows);
     }
 
-    if (debtRows.length) {
-      await tx.insert(debts).values(debtRows);
+    if (debtPaymentRows.length) {
+      await tx.insert(debtPayments).values(debtPaymentRows);
     }
   });
 }
@@ -232,9 +230,9 @@ async function getWorkspaceProducts(workspaceId: string) {
   return rows.map(toProduct);
 }
 
-async function getWorkspaceDebts(workspaceId: string) {
-  const rows = await db.select().from(debts).where(eq(debts.workspaceId, workspaceId)).orderBy(desc(debts.createdAt));
-  return rows.map(toDebt);
+async function getWorkspaceDebtPayments(workspaceId: string) {
+  const rows = await db.select().from(debtPayments).where(eq(debtPayments.workspaceId, workspaceId)).orderBy(desc(debtPayments.createdAt));
+  return rows.map(toDebtPayment);
 }
 
 async function getWorkspaceTransactions(workspaceId: string) {
@@ -264,10 +262,10 @@ async function getWorkspaceTransactions(workspaceId: string) {
 
 export async function getBootstrapData(user: SessionUser): Promise<BootstrapData> {
   const workspace = await ensureWorkspace(user);
-  const [allProducts, allTransactions, allDebts] = await Promise.all([
+  const [allProducts, allTransactions, allDebtPayments] = await Promise.all([
     getWorkspaceProducts(workspace.id),
     getWorkspaceTransactions(workspace.id),
-    getWorkspaceDebts(workspace.id),
+    getWorkspaceDebtPayments(workspace.id),
   ]);
 
   return {
@@ -279,7 +277,7 @@ export async function getBootstrapData(user: SessionUser): Promise<BootstrapData
     settings: formatWorkspaceSettings(workspace),
     products: allProducts,
     transactions: allTransactions,
-    debts: allDebts,
+    debtPayments: allDebtPayments,
   };
 }
 
@@ -344,6 +342,10 @@ export async function createTransactionForUser(user: SessionUser, input: CreateT
       id: transactionId,
       workspaceId: workspace.id,
       paymentMethod: input.paymentMethod,
+      status: input.paymentMethod === "Hutang" ? "UNPAID" : "PAID",
+      customerName: input.customerName ?? null,
+      customerPhone: input.customerPhone ?? null,
+      dueDate: input.dueDate ?? null,
       total,
       createdAt: now,
     });
@@ -366,6 +368,10 @@ export async function createTransactionForUser(user: SessionUser, input: CreateT
     id: transactionId,
     createdAt: now,
     paymentMethod: input.paymentMethod,
+    status: input.paymentMethod === "Hutang" ? "UNPAID" : "PAID",
+    customerName: input.customerName ?? null,
+    customerPhone: input.customerPhone ?? null,
+    dueDate: input.dueDate ?? null,
     total,
     items: normalizedItems.map((item) => ({
       productId: item.product.id,
@@ -456,61 +462,54 @@ export async function restockProductForUser(user: SessionUser, productId: string
   }
 }
 
-export async function createDebtForUser(user: SessionUser, input: CreateDebtInput) {
+export async function createDebtPaymentForUser(user: SessionUser, input: CreateDebtPaymentInput) {
   const workspace = await ensureWorkspace(user);
 
-  if (!input.customerName.trim()) {
-    throw new HttpError(400, "Nama pelanggan wajib diisi.");
+  if (input.amount <= 0) {
+    throw new HttpError(400, "Nominal bayar harus lebih dari 0.");
   }
 
-  if (input.amount <= 0) {
-    throw new HttpError(400, "Nominal hutang harus lebih dari 0.");
+  const [transaction] = await db
+    .select()
+    .from(transactions)
+    .where(and(eq(transactions.id, input.transactionId), eq(transactions.workspaceId, workspace.id)))
+    .limit(1);
+
+  if (!transaction || transaction.paymentMethod !== "Hutang") {
+    throw new HttpError(404, "Transaksi hutang tidak ditemukan.");
+  }
+
+  const existingPayments = await db
+    .select()
+    .from(debtPayments)
+    .where(eq(debtPayments.transactionId, input.transactionId));
+
+  const totalPaid = existingPayments.reduce((sum, dp) => sum + dp.amount, 0);
+  const remaining = transaction.total - totalPaid;
+
+  if (input.amount > remaining) {
+    throw new HttpError(400, "Nominal bayar melebihi sisa hutang.");
   }
 
   const now = new Date().toISOString();
-  await db.insert(debts).values({
-    id: createId("debt"),
-    workspaceId: workspace.id,
-    customerName: input.customerName.trim(),
-    phone: input.phone.trim(),
-    amount: input.amount,
-    dueDate: input.dueDate,
-    note: input.note.trim(),
-    status: "aktif",
-    reminderCount: 0,
-    createdAt: now,
-    updatedAt: now,
+
+  await db.transaction(async (tx) => {
+    await tx.insert(debtPayments).values({
+      id: createId("dp"),
+      workspaceId: workspace.id,
+      transactionId: input.transactionId,
+      amount: input.amount,
+      method: input.method,
+      createdAt: now,
+    });
+
+    if (totalPaid + input.amount >= transaction.total) {
+      await tx
+        .update(transactions)
+        .set({ status: "PAID" })
+        .where(eq(transactions.id, input.transactionId));
+    }
   });
-}
-
-export async function updateDebtForUser(
-  user: SessionUser,
-  debtId: string,
-  updates: Partial<Pick<Debt, "status" | "note" | "phone" | "dueDate" | "customerName" | "amount" | "reminderCount">>,
-) {
-  const workspace = await ensureWorkspace(user);
-
-  const payload: Partial<typeof debts.$inferInsert> = {
-    updatedAt: new Date().toISOString(),
-  };
-
-  if (updates.status) payload.status = updates.status;
-  if (typeof updates.note === "string") payload.note = updates.note;
-  if (typeof updates.phone === "string") payload.phone = updates.phone;
-  if (typeof updates.dueDate === "string") payload.dueDate = updates.dueDate;
-  if (typeof updates.customerName === "string") payload.customerName = updates.customerName;
-  if (typeof updates.amount === "number") payload.amount = updates.amount;
-  if (typeof updates.reminderCount === "number") payload.reminderCount = updates.reminderCount;
-
-  const [updated] = await db
-    .update(debts)
-    .set(payload)
-    .where(and(eq(debts.id, debtId), eq(debts.workspaceId, workspace.id)))
-    .returning();
-
-  if (!updated) {
-    throw new HttpError(404, "Data hutang tidak ditemukan.");
-  }
 }
 
 export async function updateSettingsForUser(
@@ -541,7 +540,7 @@ export async function resetWorkspaceForUser(user: SessionUser) {
   const seed = createSeedData();
 
   await db.transaction(async (tx) => {
-    await tx.delete(debts).where(eq(debts.workspaceId, workspace.id));
+    await tx.delete(debtPayments).where(eq(debtPayments.workspaceId, workspace.id));
     await tx.delete(transactions).where(eq(transactions.workspaceId, workspace.id));
     await tx.delete(products).where(eq(products.workspaceId, workspace.id));
 

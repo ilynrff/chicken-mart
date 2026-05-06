@@ -110,52 +110,65 @@ export default function InventarisPage() {
 
       {error ? <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm font-medium text-red-400">{error}</div> : null}
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {filteredProducts.map((product) => {
-          const isLow = product.stock <= product.minimumStock;
-          return (
-            <Card key={product.id} className="glass-card-hover group border-white/5 overflow-hidden flex flex-col">
-              <CardHeader className="pb-4 border-b border-white/5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <CardTitle className="text-white text-base leading-snug">{product.name}</CardTitle>
-                    <CardDescription className="mt-1 text-slate-400 text-xs font-medium uppercase tracking-wider">{product.category}</CardDescription>
+      {filteredProducts.length > 0 ? (
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredProducts.map((product) => {
+            const isLow = product.stock <= product.minimumStock;
+            return (
+              <Card key={product.id} className="glass-card-hover group border-white/5 overflow-hidden flex flex-col">
+                <CardHeader className="pb-4 border-b border-white/5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <CardTitle className="text-white text-base leading-snug">{product.name}</CardTitle>
+                      <CardDescription className="mt-1 text-slate-400 text-xs font-medium uppercase tracking-wider">{product.category}</CardDescription>
+                    </div>
+                    <Badge variant={isLow ? "warning" : "success"} className="shrink-0">{product.stock} stok</Badge>
                   </div>
-                  <Badge variant={isLow ? "warning" : "success"} className="shrink-0">{product.stock} stok</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 flex flex-col flex-1">
-                <div className="grid gap-3 grid-cols-2 rounded-xl bg-black/20 border border-white/5 p-4 mb-5">
-                  <div>
-                    <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Harga Jual</p>
-                    <p className="font-bold text-white mt-0.5">{formatCurrency(product.sellPrice)}</p>
+                </CardHeader>
+                <CardContent className="p-4 flex flex-col flex-1">
+                  <div className="grid gap-3 grid-cols-2 rounded-xl bg-black/20 border border-white/5 p-4 mb-5">
+                    <div>
+                      <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Harga Jual</p>
+                      <p className="font-bold text-white mt-0.5">{formatCurrency(product.sellPrice)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Harga Beli</p>
+                      <p className="font-semibold text-slate-300 mt-0.5">{formatCurrency(product.buyPrice)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Min Stok</p>
+                      <p className="font-semibold text-slate-300 mt-0.5">{product.minimumStock}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Updated</p>
+                      <p className="font-semibold text-slate-300 mt-0.5 text-xs">{formatDateTime(product.updatedAt).split(',')[0]}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Harga Beli</p>
-                    <p className="font-semibold text-slate-300 mt-0.5">{formatCurrency(product.buyPrice)}</p>
+                  <div className="flex gap-2 mt-auto">
+                    <Button variant="outline" className="flex-1" onClick={() => openEdit(product)}>
+                      <Pencil className="size-3.5 mr-2" /> Edit
+                    </Button>
+                    <Button variant="secondary" className="flex-1" onClick={() => { setRestockTarget(product); setRestockQty(10); setRestockOpen(true); }}>
+                      <RefreshCw className="size-3.5 mr-2" /> Restock
+                    </Button>
                   </div>
-                  <div>
-                    <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Min Stok</p>
-                    <p className="font-semibold text-slate-300 mt-0.5">{product.minimumStock}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Updated</p>
-                    <p className="font-semibold text-slate-300 mt-0.5 text-xs">{formatDateTime(product.updatedAt).split(',')[0]}</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-auto">
-                  <Button variant="outline" className="flex-1" onClick={() => openEdit(product)}>
-                    <Pencil className="size-3.5 mr-2" /> Edit
-                  </Button>
-                  <Button variant="secondary" className="flex-1" onClick={() => { setRestockTarget(product); setRestockQty(10); setRestockOpen(true); }}>
-                    <RefreshCw className="size-3.5 mr-2" /> Restock
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </section>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </section>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 text-center glass-panel rounded-2xl border border-white/10 mt-4">
+          <div className="rounded-full bg-white/5 p-4 mb-3 border border-white/10">
+            <PackagePlus className="size-6 text-slate-500" />
+          </div>
+          <p className="text-sm font-medium text-white">Belum ada produk</p>
+          <p className="text-xs text-slate-400 mt-1 mb-4 max-w-sm">Anda belum menambahkan produk apa pun ke dalam inventaris warung Anda.</p>
+          <Button size="sm" onClick={openCreate}>
+            Tambah Produk Pertama
+          </Button>
+        </div>
+      )}
 
       {/* DIALOGS */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>

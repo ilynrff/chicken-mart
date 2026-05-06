@@ -7,8 +7,10 @@ export async function GET(request: NextRequest) {
   try {
     const user = await requireSessionUser(request);
     const data = await getBootstrapData(user);
+    console.log(`[API /api/bootstrap] Success: Fetched data for workspace ${data.workspace.id}`);
     return ok(data, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
+    console.error("[API /api/bootstrap] Error:", error);
     return fail(error);
   }
 }

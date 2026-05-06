@@ -1,5 +1,4 @@
-export type PaymentMethod = "Tunai" | "QRIS" | "Transfer";
-export type DebtStatus = "aktif" | "lunas";
+export type PaymentMethod = "Tunai" | "QRIS" | "Transfer" | "Hutang";
 export type ReportPeriod = "harian" | "mingguan" | "bulanan";
 
 export type Workspace = {
@@ -45,21 +44,20 @@ export type Transaction = {
   id: string;
   createdAt: string;
   paymentMethod: PaymentMethod;
+  status: "PAID" | "UNPAID";
+  customerName: string | null;
+  customerPhone: string | null;
+  dueDate: string | null;
   total: number;
   items: TransactionItem[];
 };
 
-export type Debt = {
+export type DebtPayment = {
   id: string;
-  customerName: string;
-  phone: string;
+  transactionId: string;
   amount: number;
-  dueDate: string;
-  note: string;
-  status: DebtStatus;
-  reminderCount: number;
+  method: PaymentMethod;
   createdAt: string;
-  updatedAt: string;
 };
 
 export type CartItem = {
@@ -99,6 +97,8 @@ export type ReportDateRange = {
 export type ReportSummary = {
   period: ReportPeriod;
   omzet: number;
+  pembayaranHutang: number;
+  totalKasMasuk: number;
   hpp: number;
   labaKotor: number;
   labaBersih: number;
@@ -116,7 +116,7 @@ export type BootstrapData = {
   settings: StoreSettings;
   products: Product[];
   transactions: Transaction[];
-  debts: Debt[];
+  debtPayments: DebtPayment[];
 };
 
 export type ProductInput = {
@@ -131,14 +131,15 @@ export type ProductInput = {
 export type CreateTransactionInput = {
   items: CartItem[];
   paymentMethod: PaymentMethod;
+  customerName?: string;
+  customerPhone?: string;
+  dueDate?: string;
 };
 
-export type CreateDebtInput = {
-  customerName: string;
-  phone: string;
+export type CreateDebtPaymentInput = {
+  transactionId: string;
   amount: number;
-  dueDate: string;
-  note: string;
+  method: PaymentMethod;
 };
 
 export type DashboardInsightTone = "positive" | "warning" | "neutral";

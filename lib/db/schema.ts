@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import type { DebtStatus, PaymentMethod } from "@/lib/types";
+import type { PaymentMethod } from "@/lib/types";
 
 export const workspaces = pgTable(
   "workspaces",
@@ -55,11 +55,16 @@ export const transactions = pgTable(
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
     paymentMethod: text("payment_method").$type<PaymentMethod>().notNull(),
+    status: text("status").$type<"PAID" | "UNPAID">().notNull().default("PAID"),
+    customerName: text("customer_name"),
+    customerPhone: text("customer_phone"),
+    dueDate: text("due_date"),
     total: integer("total").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull(),
   },
   (table) => ({
     workspaceCreatedIndex: index("transactions_workspace_created_idx").on(table.workspaceId, table.createdAt),
+    workspaceStatusIndex: index("transactions_workspace_status_idx").on(table.workspaceId, table.status),
   }),
 );
 
@@ -84,24 +89,21 @@ export const transactionItems = pgTable(
   }),
 );
 
-export const debts = pgTable(
-  "debts",
+export const debtPayments = pgTable(
+  "debt_payments",
   {
     id: text("id").primaryKey(),
     workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    customerName: text("customer_name").notNull(),
-    phone: text("phone").notNull().default(""),
+    transactionId: text("transaction_id")
+      .notNull()
+      .references(() => transactions.id, { onDelete: "cascade" }),
     amount: integer("amount").notNull(),
-    dueDate: text("due_date").notNull(),
-    note: text("note").notNull().default(""),
-    status: text("status").$type<DebtStatus>().notNull().default("aktif"),
-    reminderCount: integer("reminder_count").notNull().default(0),
+    method: text("method").$type<PaymentMethod>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).notNull(),
   },
   (table) => ({
-    workspaceStatusIndex: index("debts_workspace_status_idx").on(table.workspaceId, table.status),
+    transactionIndex: index("debt_payments_transaction_id_idx").on(table.transactionId),
   }),
 );

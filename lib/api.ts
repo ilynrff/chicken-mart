@@ -1,8 +1,8 @@
 import type {
   BootstrapData,
-  CreateDebtInput,
+  CreateDebtPaymentInput,
   CreateTransactionInput,
-  Debt,
+  DebtPayment,
   ProductInput,
   StoreProfile,
   StoreSettings,
@@ -26,6 +26,7 @@ async function request<T>(path: string, options: RequestOptions = {}) {
   const payload = (await response.json().catch(() => null)) as { message?: string } | T | null;
 
   if (!response.ok) {
+    console.error(`[Frontend Fetch] Failed ${options.method ?? "GET"} ${path}`, payload);
     throw new Error(
       payload && typeof payload === "object" && "message" in payload && payload.message
         ? String(payload.message)
@@ -33,6 +34,7 @@ async function request<T>(path: string, options: RequestOptions = {}) {
     );
   }
 
+  console.log(`[Frontend Fetch] Success ${options.method ?? "GET"} ${path}`);
   return payload as T;
 }
 
@@ -48,11 +50,7 @@ export const api = {
     request<{ success: true }>(`/api/products/${id}`, { method: "PATCH", body: input }),
   restockProduct: (id: string, qty: number) =>
     request<{ success: true }>(`/api/products/${id}/restock`, { method: "POST", body: { qty } }),
-  createDebt: (input: CreateDebtInput) => request<{ success: true }>("/api/debts", { method: "POST", body: input }),
-  updateDebt: (
-    id: string,
-    input: Partial<Pick<Debt, "status" | "note" | "phone" | "dueDate" | "customerName" | "amount" | "reminderCount">>,
-  ) => request<{ success: true }>(`/api/debts/${id}`, { method: "PATCH", body: input }),
+  createDebtPayment: (input: CreateDebtPaymentInput) => request<{ success: true }>("/api/debt-payments", { method: "POST", body: input }),
   updateSettings: (input: { profile: StoreProfile; settings: StoreSettings }) =>
     request<{ success: true }>("/api/settings", { method: "PATCH", body: input }),
 };

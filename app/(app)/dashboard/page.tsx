@@ -20,7 +20,7 @@ import { useData } from "@/components/providers/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getDashboardMetrics, getReportSummary } from "@/lib/selectors";
-import { cn, formatCurrency, formatDateTime } from "@/lib/utils";
+import { cn, formatCurrency, formatDateTime, formatNumber } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data } = useData();
@@ -109,7 +109,7 @@ export default function DashboardPage() {
                       boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
                       color: "#fff"
                     }}
-                    formatter={(value: number) => [formatCurrency(value), "Omzet"]}
+                    formatter={(value, name) => [name === "omzet" ? formatCurrency(Number(value)) : formatNumber(Number(value)), name === "omzet" ? "Omzet" : "Transaksi"]}
                   />
                   <Area 
                     type="natural" 
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
-                        {transaction.paymentMethod === "tunai" ? <Banknote className="mr-1.5 size-3.5 text-emerald-400" /> : <CreditCard className="mr-1.5 size-3.5 text-blue-400" />}
+                        {transaction.paymentMethod === "Tunai" ? <Banknote className="mr-1.5 size-3.5 text-emerald-400" /> : <CreditCard className="mr-1.5 size-3.5 text-blue-400" />}
                         <span className="text-xs font-medium text-slate-300 capitalize">{transaction.paymentMethod}</span>
                       </div>
                       <p className="font-bold text-white w-24 text-right text-base">{formatCurrency(transaction.total)}</p>

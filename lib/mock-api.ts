@@ -1,9 +1,9 @@
 import { createSeedData } from "@/lib/mock-data";
 import type {
   BootstrapData,
-  CreateDebtInput,
+  CreateDebtPaymentInput,
   CreateTransactionInput,
-  Debt,
+  DebtPayment,
   Product,
   ProductInput,
   StoreProfile,
@@ -93,6 +93,10 @@ export const mockApi = {
       id: createId("trx"),
       createdAt: new Date().toISOString(),
       paymentMethod: input.paymentMethod,
+      status: input.paymentMethod === "Hutang" ? "UNPAID" : "PAID",
+      customerName: input.customerName ?? null,
+      customerPhone: input.customerPhone ?? null,
+      dueDate: input.dueDate ?? null,
       total: transactionItems.reduce((sum, item) => sum + item.subtotal, 0),
       items: transactionItems,
     };
@@ -222,67 +226,47 @@ export const mockApi = {
     writeState(nextState);
   },
 
-  async createDebt(input: CreateDebtInput) {
+  async createDebtPayment(input: CreateDebtPaymentInput) {
     await wait();
     const state = readState();
-
-    if (!input.customerName.trim()) {
-      throw new Error("Nama pelanggan wajib diisi.");
-    }
 
     if (input.amount <= 0) {
-      throw new Error("Nominal hutang harus lebih dari 0.");
+      throw new Error("Nominal bayar harus lebih dari 0.");
     }
 
-    const now = new Date().toISOString();
-    const debt: Debt = {
-      id: createId("debt"),
-      customerName: input.customerName.trim(),
-      phone: input.phone.trim(),
+    const transactionIndex = state.transactions.findIndex((t) => t.id === input.transactionId);
+    if (transactionIndex === -1 || state.transactions[transactionIndex].paymentMethod !== "Hutang") {
+      throw new Error("Transaksi hutang tidak ditemukan.");
+    }
+
+    const transaction = state.transactions[transactionIndex];
+    const existingPayments = state.debtPayments.filter((dp) => dp.transactionId === input.transactionId);
+    const totalPaid = existingPayments.reduce((sum, dp) => sum + dp.amount, 0);
+    const remaining = transaction.total - totalPaid;
+
+    if (input.amount > remaining) {
+      throw new Error("Nominal bayar melebihi sisa hutang.");
+    }
+
+    const dp: DebtPayment = {
+      id: createId("dp"),
+      transactionId: input.transactionId,
       amount: input.amount,
-      dueDate: input.dueDate,
-      note: input.note.trim(),
-      status: "aktif",
-      reminderCount: 0,
-      createdAt: now,
-      updatedAt: now,
+      method: input.method,
+      createdAt: new Date().toISOString(),
     };
 
     const nextState = {
       ...state,
-      debts: [debt, ...state.debts],
+      debtPayments: [dp, ...state.debtPayments],
     };
 
-    writeState(nextState);
-    return clone(debt);
-  },
-
-  async updateDebt(
-    id: string,
-    updates: Partial<Pick<Debt, "status" | "note" | "phone" | "dueDate" | "customerName" | "amount" | "reminderCount">>,
-  ) {
-    await wait();
-    const state = readState();
-    let found = false;
-
-    const nextState = {
-      ...state,
-      debts: state.debts.map((debt) => {
-        if (debt.id !== id) {
-          return debt;
-        }
-
-        found = true;
-        return {
-          ...debt,
-          ...updates,
-          updatedAt: new Date().toISOString(),
-        };
-      }),
-    };
-
-    if (!found) {
-      throw new Error("Data hutang tidak ditemukan.");
+    if (totalPaid + input.amount >= transaction.total) {
+      nextState.transactions = [...state.transactions];
+      nextState.transactions[transactionIndex] = {
+        ...transaction,
+        status: "PAID",
+      };
     }
 
     writeState(nextState);

@@ -4,9 +4,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { api } from "@/lib/api";
 import type {
   BootstrapData,
-  CreateDebtInput,
+  CreateDebtPaymentInput,
   CreateTransactionInput,
-  Debt,
+  DebtPayment,
   ProductInput,
   StoreProfile,
   StoreSettings,
@@ -23,11 +23,7 @@ type DataContextValue = {
   createProduct: (input: ProductInput) => Promise<void>;
   updateProduct: (id: string, input: ProductInput) => Promise<void>;
   restockProduct: (id: string, qty: number) => Promise<void>;
-  createDebt: (input: CreateDebtInput) => Promise<void>;
-  updateDebt: (
-    id: string,
-    input: Partial<Pick<Debt, "status" | "note" | "phone" | "dueDate" | "customerName" | "amount" | "reminderCount">>,
-  ) => Promise<void>;
+  createDebtPayment: (input: CreateDebtPaymentInput) => Promise<void>;
   updateSettings: (input: { profile: StoreProfile; settings: StoreSettings }) => Promise<void>;
   resetWorkspace: () => Promise<void>;
 };
@@ -114,11 +110,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       restockProduct: async (id, qty) => {
         await runMutation(() => api.restockProduct(id, qty));
       },
-      createDebt: async (input) => {
-        await runMutation(() => api.createDebt(input));
-      },
-      updateDebt: async (id, input) => {
-        await runMutation(() => api.updateDebt(id, input));
+      createDebtPayment: async (input) => {
+        await runMutation(() => api.createDebtPayment(input));
       },
       updateSettings: async (input) => {
         await runMutation(() => api.updateSettings(input));

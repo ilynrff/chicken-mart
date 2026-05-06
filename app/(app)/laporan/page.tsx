@@ -32,7 +32,8 @@ function csvEscape(value: string | number) {
 function downloadReportCsv(summary: ReportSummary, storeName: string, activeLabel: string) {
   const rows = [
     ["Nama Warung", storeName], ["Periode", activeLabel], ["Rentang", `${formatDate(summary.dateRange.from ?? "")} - ${formatDate(summary.dateRange.to ?? "")}`],
-    ["Omzet", summary.omzet], ["Jumlah transaksi", summary.jumlahTransaksi], ["Rata-rata belanja", Math.round(summary.rataRataBelanja)], [],
+    ["Penjualan (Omzet)", summary.omzet], ["Pembayaran Hutang", summary.pembayaranHutang], ["Total Kas Masuk", summary.totalKasMasuk], 
+    ["Jumlah transaksi", summary.jumlahTransaksi], ["Rata-rata belanja", Math.round(summary.rataRataBelanja)], [],
     ["Produk", "Harga jual", "Qty terjual", "Omzet produk"],
     ...summary.soldProducts.map((p) => [p.productName, p.sellPrice, p.qty, p.omzet]),
   ];
@@ -95,9 +96,9 @@ export default function LaporanPage() {
   const activeRangeLabel = invalidRange ? "Rentang tanggal tidak valid" : activeSummary.dateRange.isCustom ? `${formatDate(activeSummary.dateRange.from ?? "")} - ${formatDate(activeSummary.dateRange.to ?? "")}` : activeSummary.dateRange.label;
 
   const summaryCards = [
-    { label: "Omzet harian", value: formatCurrency(dailySummary.omzet), helper: `${dailySummary.jumlahTransaksi} transaksi` },
-    { label: "Omzet mingguan", value: formatCurrency(weeklySummary.omzet), helper: `${weeklySummary.jumlahTransaksi} transaksi` },
-    { label: "Omzet bulanan", value: formatCurrency(monthlySummary.omzet), helper: `${monthlySummary.jumlahTransaksi} transaksi` },
+    { label: "Penjualan (Omzet)", value: formatCurrency(activeSummary.omzet), helper: "Nilai barang yang terjual" },
+    { label: "Pembayaran Hutang", value: formatCurrency(activeSummary.pembayaranHutang), helper: "Uang masuk dari cicilan hutang" },
+    { label: "Total Kas Masuk", value: formatCurrency(activeSummary.totalKasMasuk), helper: "Penjualan tunai/QR/Transfer + Cicilan" },
     { label: "Jumlah transaksi", value: formatNumber(activeSummary.jumlahTransaksi), helper: invalidRange ? "Periksa filter" : `Periode ${periodLabels[period]}` },
   ];
 
@@ -218,7 +219,7 @@ export default function LaporanPage() {
                       <p className="font-semibold text-white text-sm truncate">{product.productName}</p>
                       <p className="mt-1 text-[11px] font-medium text-slate-400 uppercase tracking-widest">{product.qty} item terjual</p>
                     </div>
-                    <Badge variant={index === 0 ? "default" : "secondary"} className={index === 0 ? "glow-red" : "bg-white/10 text-slate-300"}>#{index + 1}</Badge>
+                    <Badge variant={index === 0 ? "default" : "outline"} className={index === 0 ? "glow-red" : "bg-white/10 text-slate-300 border-white/10"}>#{index + 1}</Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm pt-3 border-t border-white/5">
                     <span className="text-slate-400 text-xs">Omzet produk</span>
