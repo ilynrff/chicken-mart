@@ -136,75 +136,123 @@ export default function HutangPage() {
       <section className="grid gap-4">
         {filteredDebts.length > 0 ? (
           filteredDebts.map((debt) => (
-            <Card key={debt.id} className="glass-card-hover group border-white/5 bg-white/5">
-              <CardContent className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center justify-center size-10 rounded-full bg-white/10 text-white shrink-0">
-                      <User className="size-4" />
+            <Card key={debt.id} className="glass-card group border-white/5 bg-white/5 overflow-hidden">
+              <CardContent className="p-0">
+                <div className="flex flex-col lg:flex-row">
+                  {/* A. Customer Info Section */}
+                  <div className="p-6 lg:w-1/4 border-b lg:border-b-0 lg:border-r border-white/5 flex flex-col items-center lg:items-start text-center lg:text-left">
+                    <div className="relative mb-3">
+                      <div className="flex items-center justify-center size-14 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 text-slate-400 border border-white/10 shadow-inner group-hover:border-red-500/30 transition-colors">
+                        <User className="size-6" />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1">
+                        {debt.remainingDebt > 0 ? (
+                          <div className="size-4 rounded-full bg-red-500 border-2 border-[#0a0a0c] shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                        ) : (
+                          <div className="size-4 rounded-full bg-emerald-500 border-2 border-[#0a0a0c] shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">{debt.customerName || "Tanpa Nama"}</h3>
-                      <p className="text-xs text-slate-400">{debt.customerPhone || "Tidak ada kontak"}</p>
+                    <h3 className="text-lg font-bold text-white truncate w-full">{debt.customerName || "Tanpa Nama"}</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">{debt.customerPhone || "Tidak ada kontak"}</p>
+                    
+                    <div className="mt-4">
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border transition-all",
+                          debt.remainingDebt > 0 
+                            ? "bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]" 
+                            : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                        )}
+                      >
+                        {debt.remainingDebt > 0 ? "Belum Lunas" : "Lunas"}
+                      </Badge>
                     </div>
-                    <Badge variant={debt.remainingDebt > 0 ? "danger" : "success"} className="ml-2">
-                      {debt.remainingDebt > 0 ? "Belum Lunas" : "Lunas"}
-                    </Badge>
                   </div>
 
-                  <div className="grid gap-3 rounded-xl bg-black/20 border border-white/5 p-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Total Transaksi</p>
-                      <p className="font-bold text-white mt-0.5">{formatCurrency(debt.total)}</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Sisa Tagihan</p>
-                      <p className="font-bold text-red-400 mt-0.5">{formatCurrency(debt.remainingDebt)}</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Tanggal Beli</p>
-                      <p className="font-semibold text-slate-300 mt-0.5">{formatDate(debt.createdAt)}</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Jatuh Tempo</p>
-                      <p className="font-semibold text-amber-400 mt-0.5">{debt.dueDate ? formatDate(debt.dueDate) : "-"}</p>
+                  {/* B. Debt Summary Section */}
+                  <div className="p-6 flex-1 bg-black/20 lg:bg-transparent">
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Sisa Tagihan</p>
+                        <p className="text-3xl font-black text-red-400 tracking-tight">{formatCurrency(debt.remainingDebt)}</p>
+                        
+                        {/* Progress Bar */}
+                        <div className="mt-4 space-y-2">
+                          <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
+                            <span className="text-slate-500">Progres Pelunasan</span>
+                            <span className="text-emerald-400">{Math.round((debt.paidAmount / debt.total) * 100)}%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                            <div 
+                              className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full transition-all duration-1000" 
+                              style={{ width: `${(debt.paidAmount / debt.total) * 100}%` }}
+                            />
+                          </div>
+                          <p className="text-[10px] text-slate-500 font-medium">
+                            {formatCurrency(debt.paidAmount)} terbayar dari {formatCurrency(debt.total)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Total Transaksi</p>
+                          <p className="text-sm font-bold text-slate-300">{formatCurrency(debt.total)}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">ID Transaksi</p>
+                          <p className="text-sm font-bold text-slate-300">#{debt.id.slice(-6).toUpperCase()}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Tanggal Beli</p>
+                          <p className="text-sm font-bold text-slate-400">{formatDate(debt.createdAt)}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Jatuh Tempo</p>
+                          <p className={cn("text-sm font-bold", debt.dueDate ? "text-amber-400" : "text-slate-500")}>
+                            {debt.dueDate ? formatDate(debt.dueDate) : "N/A"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex flex-wrap gap-2 lg:w-48 lg:flex-col mt-2 lg:mt-0">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedDebt(debt);
-                      setDetailOpen(true);
-                    }}
-                    className="w-full justify-center bg-transparent border-white/10 hover:bg-white/10"
-                  >
-                    <FileText className="size-4 mr-2" />
-                    Lihat Detail
-                  </Button>
-
-                  {debt.remainingDebt > 0 && (
-                    <Button 
+                  {/* C. Action Area */}
+                  <div className="p-6 lg:w-1/5 border-t lg:border-t-0 lg:border-l border-white/5 flex flex-row lg:flex-col gap-3">
+                    <Button
+                      variant="outline"
                       onClick={() => {
                         setSelectedDebt(debt);
-                        setPaymentAmount(debt.remainingDebt);
-                        setPaymentMethod("Tunai");
-                        setPaymentOpen(true);
-                      }} 
-                      disabled={isMutating}
-                      className="w-full justify-center glow-red"
+                        setDetailOpen(true);
+                      }}
+                      className="flex-1 lg:w-full h-11 rounded-xl bg-white/5 border-white/10 hover:bg-white/10 text-xs font-bold uppercase tracking-wider transition-all"
                     >
-                      <HandCoins className="size-4 mr-2" />
-                      Bayar Hutang
+                      <FileText className="size-4 mr-2 text-slate-400" />
+                      Detail
                     </Button>
-                  )}
-                  {debt.remainingDebt === 0 && (
-                     <div className="flex items-center justify-center gap-2 text-emerald-400 text-sm font-bold bg-emerald-500/10 border border-emerald-500/20 py-2.5 rounded-xl w-full">
-                       <CheckCircle2 className="size-4" /> Lunas
-                     </div>
-                  )}
+
+                    {debt.remainingDebt > 0 ? (
+                      <Button 
+                        onClick={() => {
+                          setSelectedDebt(debt);
+                          setPaymentAmount(debt.remainingDebt);
+                          setPaymentMethod("Tunai");
+                          setPaymentOpen(true);
+                        }} 
+                        disabled={isMutating}
+                        className="flex-1 lg:w-full h-11 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-xs font-bold uppercase tracking-wider glow-red transition-all border-none"
+                      >
+                        <HandCoins className="size-4 mr-2" />
+                        Bayar
+                      </Button>
+                    ) : (
+                      <div className="flex-1 lg:w-full h-11 flex items-center justify-center gap-2 text-emerald-400 text-[10px] font-black uppercase tracking-widest bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
+                        <CheckCircle2 className="size-4" /> Lunas
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
