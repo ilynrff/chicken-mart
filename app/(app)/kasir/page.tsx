@@ -162,8 +162,15 @@ export default function KasirPage() {
   };
 
   return (
-    <div className="grid gap-6 xl:h-[calc(100vh-5.25rem)] xl:grid-cols-[1.6fr_1fr] xl:items-start">
-      <div className="space-y-6 xl:flex xl:min-h-0 xl:flex-col xl:overflow-hidden">
+    <div className="relative min-h-full -m-4 sm:-m-8 p-4 sm:p-8">
+      {/* 0. LOCAL DECORATIVE BACKGROUND (Only for Kasir) */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-5%] left-[-5%] size-[40%] bg-red-600/10 blur-[100px] rounded-full" />
+        <div className="absolute bottom-[-5%] right-[-5%] size-[40%] bg-red-600/5 blur-[80px] rounded-full" />
+      </div>
+
+      <div className="relative z-10 flex flex-col xl:flex-row gap-6 items-start">
+        <div className="flex-1 min-w-0 space-y-6">
         
         {/* HEADER / INFO SECTION */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -226,7 +233,7 @@ export default function KasirPage() {
 
         {/* PRODUCT GRID */}
         {filteredProducts.length > 0 ? (
-          <section className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto pr-2">
+          <section className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 pb-20">
             {filteredProducts.map((product) => {
               const isLow = product.stock <= product.minimumStock;
               return (
@@ -267,8 +274,9 @@ export default function KasirPage() {
         )}
       </div>
 
-      {/* CART SIDEBAR (Clean & Spaced) */}
-      <Card className="flex flex-col h-[calc(100vh-5.25rem)] xl:h-full border-white/5 bg-white/5 rounded-2xl overflow-hidden">
+      {/* CART SIDEBAR (Sticky on Desktop) */}
+      <div className="w-full xl:w-[400px] xl:sticky xl:top-6 shrink-0 z-30 pb-20 xl:pb-0">
+        <Card className="flex flex-col h-[calc(100vh-12rem)] xl:h-[calc(100vh-10rem)] border-white/5 bg-white/5 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
         <div className="p-5 border-b border-white/5 shrink-0 flex justify-between items-center bg-black/20">
           <div className="flex items-center gap-2 text-white font-bold text-lg">
             <ShoppingCart className="size-5 text-slate-300" /> Keranjang
@@ -398,5 +406,7 @@ export default function KasirPage() {
         </div>
       </Card>
     </div>
+  </div>
+</div>
   );
 }
