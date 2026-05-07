@@ -173,67 +173,179 @@ export default function InventarisPage() {
       {/* DIALOGS */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogTrigger asChild><span className="hidden" /></DialogTrigger>
-        <DialogContent className="glass-card border border-white/10 text-white p-0 overflow-hidden sm:max-w-[500px]">
-          <DialogHeader className="p-6 border-b border-white/5 bg-white/5">
-            <DialogTitle className="text-xl font-bold">{editingProduct ? "Edit Produk" : "Tambah Produk Baru"}</DialogTitle>
-            <DialogDescription className="text-slate-400 mt-1">Simpan data produk lengkap agar kasir dan laporan sinkron.</DialogDescription>
+        <DialogContent className="glass-card border border-white/10 text-white p-0 overflow-hidden sm:max-w-[520px] rounded-3xl">
+          <DialogHeader className="p-8 pb-6 bg-gradient-to-b from-white/[0.08] to-transparent">
+            <div className="flex items-center gap-4">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+                <PackagePlus className="size-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-black tracking-tight">{editingProduct ? "Edit Produk" : "Tambah Produk Baru"}</DialogTitle>
+                <DialogDescription className="text-slate-400 mt-1 text-sm font-medium">Simpan data produk lengkap agar kasir dan laporan sinkron.</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="p-6 grid gap-5">
-            <div className="space-y-2">
-              <Label htmlFor="product-name" className="text-slate-300">Nama produk</Label>
-              <Input id="product-name" value={form.name} onChange={(e) => setForm(c => ({ ...c, name: e.target.value }))} className="bg-black/20 border-white/10 text-white" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="product-category" className="text-slate-300">Kategori</Label>
-              <div className="relative">
-                <select id="product-category" value={form.category} onChange={(e) => setForm(c => ({ ...c, category: e.target.value }))} className="flex h-11 w-full appearance-none rounded-xl border border-white/10 bg-black/20 px-4 pr-11 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
-                  {categoryOptions.map(option => <option key={option} value={option} className="bg-slate-900 text-white">{option}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+
+          <div className="px-8 pb-8 space-y-8">
+            {/* Section A: Informasi Produk */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/80">Informasi Produk</span>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="product-name" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Nama produk</Label>
+                  <Input 
+                    id="product-name" 
+                    placeholder="Contoh: Ayam Broiler"
+                    value={form.name} 
+                    onChange={(e) => setForm(c => ({ ...c, name: e.target.value }))} 
+                    className="h-10 bg-white/5 border-white/10 text-white focus:bg-white/[0.08] focus:border-red-500/40 transition-all placeholder:text-slate-600" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="product-category" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Kategori</Label>
+                  <div className="relative">
+                    <select 
+                      id="product-category" 
+                      value={form.category} 
+                      onChange={(e) => setForm(c => ({ ...c, category: e.target.value }))} 
+                      className="flex h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-4 pr-11 text-sm text-white focus:outline-none focus:border-red-500/40 focus:bg-white/[0.08] transition-all"
+                    >
+                      {categoryOptions.map(option => <option key={option} value={option} className="bg-slate-900 text-white">{option}</option>)}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="buy-price" className="text-slate-300">Harga beli</Label>
-                <Input id="buy-price" type="number" value={form.buyPrice === 0 ? "" : form.buyPrice} onChange={(e) => setForm(c => ({ ...c, buyPrice: e.target.value ? Number(e.target.value) : 0 }))} className="bg-black/20 border-white/10 text-white" />
+
+            {/* Section B: Harga & Inventaris */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/80">Harga & Inventaris</span>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="sell-price" className="text-slate-300">Harga jual</Label>
-                <Input id="sell-price" type="number" value={form.sellPrice === 0 ? "" : form.sellPrice} onChange={(e) => setForm(c => ({ ...c, sellPrice: e.target.value ? Number(e.target.value) : 0 }))} className="bg-black/20 border-white/10 text-white" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="buy-price" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Harga beli</Label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">Rp</span>
+                    <Input 
+                      id="buy-price" 
+                      type="number" 
+                      value={form.buyPrice === 0 ? "" : form.buyPrice} 
+                      onChange={(e) => setForm(c => ({ ...c, buyPrice: e.target.value ? Number(e.target.value) : 0 }))} 
+                      className="h-10 pl-11 bg-white/5 border-white/10 text-white focus:bg-white/[0.08] focus:border-red-500/40 transition-all" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sell-price" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Harga jual</Label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">Rp</span>
+                    <Input 
+                      id="sell-price" 
+                      type="number" 
+                      value={form.sellPrice === 0 ? "" : form.sellPrice} 
+                      onChange={(e) => setForm(c => ({ ...c, sellPrice: e.target.value ? Number(e.target.value) : 0 }))} 
+                      className="h-10 pl-11 bg-white/5 border-white/10 text-white focus:bg-white/[0.08] focus:border-red-500/40 transition-all font-bold text-emerald-400" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="stock" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Stok Awal</Label>
+                  <Input 
+                    id="stock" 
+                    type="number" 
+                    value={form.stock} 
+                    onChange={(e) => setForm(c => ({ ...c, stock: Number(e.target.value) }))} 
+                    className="h-10 bg-white/5 border-white/10 text-white focus:bg-white/[0.08] focus:border-red-500/40 transition-all" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="minimum-stock" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Minimum stok</Label>
+                  <Input 
+                    id="minimum-stock" 
+                    type="number" 
+                    value={form.minimumStock} 
+                    onChange={(e) => setForm(c => ({ ...c, minimumStock: Number(e.target.value) }))} 
+                    className="h-10 bg-white/5 border-white/10 text-white focus:bg-white/[0.08] focus:border-red-500/40 transition-all" 
+                  />
+                </div>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="stock" className="text-slate-300">Stok</Label>
-                <Input id="stock" type="number" value={form.stock} onChange={(e) => setForm(c => ({ ...c, stock: Number(e.target.value) }))} className="bg-black/20 border-white/10 text-white" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="minimum-stock" className="text-slate-300">Minimum stok</Label>
-                <Input id="minimum-stock" type="number" value={form.minimumStock} onChange={(e) => setForm(c => ({ ...c, minimumStock: Number(e.target.value) }))} className="bg-black/20 border-white/10 text-white" />
-              </div>
-            </div>
+            
+            {error && <p className="text-xs font-medium text-red-400 bg-red-400/10 border border-red-400/20 px-4 py-2 rounded-lg">{error}</p>}
           </div>
-          <DialogFooter className="p-6 pt-0 border-t border-white/5 bg-white/5 mt-auto">
-            <Button variant="outline" onClick={() => setFormOpen(false)}>Batal</Button>
-            <Button onClick={submitForm} disabled={isMutating}>{editingProduct ? "Simpan perubahan" : "Tambah produk"}</Button>
+
+          <DialogFooter className="p-8 pt-0 flex gap-3 sm:justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setFormOpen(false)}
+              className="h-11 px-6 rounded-2xl border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all"
+            >
+              Batal
+            </Button>
+            <Button 
+              onClick={submitForm} 
+              disabled={isMutating}
+              className="h-11 px-8 rounded-2xl bg-gradient-to-r from-red-600 to-red-500 text-white font-bold shadow-[0_4px_15px_rgba(220,38,38,0.3)] hover:shadow-[0_6px_20px_rgba(220,38,38,0.4)] hover:translate-y-[-1px] active:translate-y-[0] transition-all"
+            >
+              {editingProduct ? "Simpan Perubahan" : "Tambah Produk"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={restockOpen} onOpenChange={setRestockOpen}>
         <DialogTrigger asChild><span className="hidden" /></DialogTrigger>
-        <DialogContent className="glass-card border border-white/10 text-white p-0 sm:max-w-[400px]">
-          <DialogHeader className="p-6 border-b border-white/5 bg-white/5">
-            <DialogTitle className="text-xl font-bold">Restock produk</DialogTitle>
-            <DialogDescription className="text-slate-400 mt-1">Tambahkan stok untuk {restockTarget?.name ?? "produk terpilih"}.</DialogDescription>
+        <DialogContent className="glass-card border border-white/10 text-white p-0 overflow-hidden sm:max-w-[420px] rounded-3xl">
+          <DialogHeader className="p-8 pb-6 bg-gradient-to-b from-white/[0.08] to-transparent">
+            <div className="flex items-center gap-4">
+              <div className="flex size-12 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500 border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+                <RefreshCw className="size-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-black tracking-tight">Restock Produk</DialogTitle>
+                <DialogDescription className="text-slate-400 mt-1 text-sm font-medium">Tambahkan stok untuk {restockTarget?.name ?? "produk terpilih"}.</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="p-6 space-y-3">
-            <Label htmlFor="restock-qty" className="text-slate-300">Jumlah masuk (item)</Label>
-            <Input id="restock-qty" type="number" min={1} value={restockQty} onChange={(e) => setRestockQty(Number(e.target.value))} className="bg-black/20 border-white/10 text-white text-lg h-12" />
+
+          <div className="px-8 pb-8 space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="restock-qty" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Jumlah masuk (item)</Label>
+              <div className="relative">
+                <Input 
+                  id="restock-qty" 
+                  type="number" 
+                  min={1} 
+                  value={restockQty} 
+                  onChange={(e) => setRestockQty(Number(e.target.value))} 
+                  className="h-14 bg-white/5 border-white/10 text-white text-2xl font-black text-center focus:bg-white/[0.08] focus:border-blue-500/40 transition-all rounded-2xl" 
+                />
+              </div>
+              <p className="text-[11px] text-center text-slate-500 font-medium italic">Stok akan otomatis ditambahkan ke saldo inventaris.</p>
+            </div>
+            
+            {error && <p className="text-xs font-medium text-red-400 bg-red-400/10 border border-red-400/20 px-4 py-2 rounded-lg">{error}</p>}
           </div>
-          <DialogFooter className="p-6 pt-0 border-t border-white/5 bg-white/5">
-            <Button variant="outline" onClick={() => setRestockOpen(false)}>Batal</Button>
-            <Button onClick={submitRestock} disabled={isMutating}>Simpan Restock</Button>
+
+          <DialogFooter className="p-8 pt-0 flex gap-3 sm:justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setRestockOpen(false)}
+              className="h-11 px-6 rounded-2xl border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all"
+            >
+              Batal
+            </Button>
+            <Button 
+              onClick={submitRestock} 
+              disabled={isMutating}
+              className="h-11 px-8 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-[0_4px_15px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.4)] hover:translate-y-[-1px] active:translate-y-[0] transition-all"
+            >
+              Simpan Restock
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

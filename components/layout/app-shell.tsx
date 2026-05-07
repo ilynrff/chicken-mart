@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 py-6 glass-panel border-x-0 border-t-0 rounded-none bg-black/20">
           <div>
             <h2 className="text-2xl font-bold text-white">Hi, {session?.fullName?.split(' ')[0] ?? "Apiip"} 👋</h2>
-            <p className="text-sm text-slate-400 mt-1">Have a nice day</p>
+            <p className="text-sm text-slate-400 mt-1">Have a nice day 😊 اَلْحَمْدُ للهِ جَزَاكُمُ اللهُ خَيْرًا</p>
           </div>
 
           <div className="flex items-center gap-4">
