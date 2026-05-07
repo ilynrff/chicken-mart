@@ -107,3 +107,20 @@ export const debtPayments = pgTable(
     transactionIndex: index("debt_payments_transaction_id_idx").on(table.transactionId),
   }),
 );
+
+export const categories = pgTable(
+  "categories",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color"),
+    icon: text("icon"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull(),
+  },
+  (table) => ({
+    workspaceIndex: index("categories_workspace_id_idx").on(table.workspaceId),
+  }),
+);

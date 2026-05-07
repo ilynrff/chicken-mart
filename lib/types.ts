@@ -18,6 +18,19 @@ export type StoreSettings = {
   defaultMinimumStock: number;
 };
 
+export type Category = {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+};
+
+export type CategoryInput = {
+  name: string;
+  color?: string;
+  icon?: string;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -141,6 +154,7 @@ export type BootstrapData = {
   profile: StoreProfile;
   settings: StoreSettings;
   products: Product[];
+  categories: Category[];
   transactions: Transaction[];
   debtPayments: DebtPayment[];
 };

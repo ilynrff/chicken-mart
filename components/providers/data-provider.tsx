@@ -3,7 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import type {
-  BootstrapData,
+  Category,
+  CategoryInput,
   CreateDebtPaymentInput,
   CreateTransactionInput,
   DebtPayment,
@@ -25,6 +26,9 @@ type DataContextValue = {
   restockProduct: (id: string, qty: number) => Promise<void>;
   createDebtPayment: (input: CreateDebtPaymentInput) => Promise<void>;
   updateSettings: (input: { profile: StoreProfile; settings: StoreSettings }) => Promise<void>;
+  createCategory: (input: CategoryInput) => Promise<Category>;
+  updateCategory: (id: string, input: CategoryInput) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   resetWorkspace: () => Promise<void>;
 };
 
@@ -115,6 +119,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       },
       updateSettings: async (input) => {
         await runMutation(() => api.updateSettings(input));
+      },
+      createCategory: async (input) => runMutation(() => api.createCategory(input)),
+      updateCategory: async (id, input) => {
+        await runMutation(() => api.updateCategory(id, input));
+      },
+      deleteCategory: async (id) => {
+        await runMutation(() => api.deleteCategory(id));
       },
       resetWorkspace: async () => {
         await runMutation(() => api.resetWorkspace());

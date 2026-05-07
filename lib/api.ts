@@ -1,5 +1,7 @@
 import type {
   BootstrapData,
+  Category,
+  CategoryInput,
   CreateDebtPaymentInput,
   CreateTransactionInput,
   DebtPayment,
@@ -53,4 +55,7 @@ export const api = {
   createDebtPayment: (input: CreateDebtPaymentInput) => request<{ success: true }>("/api/debt-payments", { method: "POST", body: input }),
   updateSettings: (input: { profile: StoreProfile; settings: StoreSettings }) =>
     request<{ success: true }>("/api/settings", { method: "PATCH", body: input }),
+  createCategory: (input: CategoryInput) => request<Category>("/api/categories", { method: "POST", body: input }),
+  updateCategory: (id: string, input: CategoryInput) => request<{ success: true }>(`/api/categories/${id}`, { method: "PATCH", body: input }),
+  deleteCategory: (id: string) => request<{ success: true }>(`/api/categories/${id}`, { method: "DELETE" }),
 };

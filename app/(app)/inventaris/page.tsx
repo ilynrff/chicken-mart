@@ -25,19 +25,22 @@ function buildForm(defaultMinimumStock: number, defaultCategory = "Sembako"): Pr
 }
 
 export default function InventarisPage() {
-  const { data, createProduct, updateProduct, restockProduct, isMutating } = useData();
+  const { data, createProduct, updateProduct, restockProduct, createCategory, deleteCategory, isMutating } = useData();
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [restockOpen, setRestockOpen] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [restockTarget, setRestockTarget] = useState<Product | null>(null);
   const [restockQty, setRestockQty] = useState(10);
   const [error, setError] = useState<string | null>(null);
+  const [catName, setCatName] = useState("");
+  const [catError, setCatError] = useState<string | null>(null);
   const [form, setForm] = useState<ProductInput>(buildForm(8));
 
   const categoryOptions = useMemo(() => {
-    if (!data) return ["Sembako", "Frozen Food", "Makanan Kering", "Minuman", "Kebutuhan Rumah Tangga", "Lainnya"];
-    return [...new Set([...data.products.map((product) => product.category), "Sembako", "Frozen Food", "Makanan Kering", "Minuman", "Kebutuhan Rumah Tangga", "Lainnya"])];
+    if (!data) return [];
+    return (data.categories || []).map(c => c.name);
   }, [data]);
 
   const filteredProducts = useMemo(() => {
@@ -84,6 +87,18 @@ export default function InventarisPage() {
     }
   };
 
+  const submitCategory = async () => {
+    try {
+      setCatError(null);
+      const newCat = await createCategory({ name: catName });
+      setForm(c => ({ ...c, category: newCat.name }));
+      setCatOpen(false);
+      setCatName("");
+    } catch (caughtError) {
+      setCatError(caughtError instanceof Error ? caughtError.message : "Gagal menyimpan kategori.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -119,8 +134,12 @@ export default function InventarisPage() {
                 <CardHeader className="pb-4 border-b border-white/5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <CardTitle className="text-white text-base leading-snug">{product.name}</CardTitle>
-                      <CardDescription className="mt-1 text-slate-400 text-xs font-medium uppercase tracking-wider">{product.category}</CardDescription>
+                      <CardTitle className="text-white text-base leading-snug truncate">{product.name}</CardTitle>
+                      <div className="mt-2">
+                        <Badge variant="outline" className="bg-red-500/5 text-red-400 border-red-500/20 text-[10px] font-black uppercase tracking-wider py-0.5">
+                          {product.category}
+                        </Badge>
+                      </div>
                     </div>
                     <Badge variant={isLow ? "warning" : "success"} className="shrink-0">{product.stock} stok</Badge>
                   </div>
@@ -204,17 +223,39 @@ export default function InventarisPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="product-category" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Kategori</Label>
-                  <div className="relative">
-                    <select 
-                      id="product-category" 
-                      value={form.category} 
-                      onChange={(e) => setForm(c => ({ ...c, category: e.target.value }))} 
-                      className="flex h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-4 pr-11 text-sm text-white focus:outline-none focus:border-red-500/40 focus:bg-white/[0.08] transition-all"
+                  <div className="flex items-center justify-between ml-1">
+                    <Label htmlFor="product-category" className="text-xs font-bold uppercase tracking-wider text-slate-400">Kategori</Label>
+                    <button 
+                      type="button" 
+                      onClick={() => setCatOpen(true)}
+                      className="text-[10px] font-black uppercase text-red-400 hover:text-red-300 transition-colors"
                     >
-                      {categoryOptions.map(option => <option key={option} value={option} className="bg-slate-900 text-white">{option}</option>)}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+                      + Tambah kategori
+                    </button>
+                  </div>
+                  <div className="relative">
+                    {categoryOptions.length > 0 ? (
+                      <>
+                        <select 
+                          id="product-category" 
+                          value={form.category} 
+                          onChange={(e) => setForm(c => ({ ...c, category: e.target.value }))} 
+                          className="flex h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/5 px-4 pr-11 text-sm text-white focus:outline-none focus:border-red-500/40 focus:bg-white/[0.08] transition-all"
+                        >
+                          {!form.category && <option value="" disabled>Pilih kategori</option>}
+                          {categoryOptions.map(option => <option key={option} value={option} className="bg-slate-900 text-white">{option}</option>)}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-slate-500" />
+                      </>
+                    ) : (
+                      <div 
+                        onClick={() => setCatOpen(true)}
+                        className="flex h-10 w-full items-center justify-between rounded-xl border border-dashed border-white/10 bg-white/5 px-4 text-xs text-slate-500 cursor-pointer hover:bg-white/10 transition-all"
+                      >
+                        <span>Belum ada kategori</span>
+                        <span className="text-red-400 font-bold">+ Buat pertama</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -345,6 +386,44 @@ export default function InventarisPage() {
               className="h-11 px-8 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-[0_4px_15px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.4)] hover:translate-y-[-1px] active:translate-y-[0] transition-all"
             >
               Simpan Restock
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={catOpen} onOpenChange={setCatOpen}>
+        <DialogContent className="glass-card border border-white/10 text-white p-0 overflow-hidden sm:max-w-[400px] rounded-3xl">
+          <DialogHeader className="p-8 pb-6 bg-gradient-to-b from-white/[0.08] to-transparent">
+            <DialogTitle className="text-xl font-black tracking-tight">Tambah Kategori</DialogTitle>
+            <DialogDescription className="text-slate-400 mt-1 text-sm font-medium">Buat kategori baru untuk mengelompokkan produk Anda.</DialogDescription>
+          </DialogHeader>
+          <div className="px-8 pb-8 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cat-name" className="text-xs font-bold uppercase tracking-wider text-slate-400 ml-1">Nama Kategori</Label>
+              <Input 
+                id="cat-name" 
+                placeholder="Contoh: Frozen Food"
+                value={catName} 
+                onChange={(e) => setCatName(e.target.value)} 
+                className="h-11 bg-white/5 border-white/10 text-white focus:bg-white/[0.08] focus:border-red-500/40 transition-all placeholder:text-slate-600" 
+              />
+            </div>
+            {catError && <p className="text-xs font-medium text-red-400 bg-red-400/10 border border-red-400/20 px-4 py-2 rounded-lg">{catError}</p>}
+          </div>
+          <DialogFooter className="p-8 pt-0 flex gap-3 sm:justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setCatOpen(false)}
+              className="h-11 px-6 rounded-2xl border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all"
+            >
+              Batal
+            </Button>
+            <Button 
+              onClick={submitCategory} 
+              disabled={isMutating || !catName.trim()}
+              className="h-11 px-8 rounded-2xl bg-gradient-to-r from-red-600 to-red-500 text-white font-bold shadow-[0_4px_15px_rgba(220,38,38,0.3)] hover:shadow-[0_6px_20px_rgba(220,38,38,0.4)] transition-all"
+            >
+              Simpan
             </Button>
           </DialogFooter>
         </DialogContent>

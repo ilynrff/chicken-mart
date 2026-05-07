@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { debtPayments, products, transactionItems, transactions, workspaces } from "@/lib/db/schema";
+import { categories, debtPayments, products, transactionItems, transactions, workspaces } from "@/lib/db/schema";
 import { createSeedData } from "@/lib/mock-data";
 import { HttpError } from "@/lib/server/errors";
 import type {
@@ -18,12 +18,14 @@ import type {
 } from "@/lib/types";
 import { createId } from "@/lib/utils";
 import type { SessionUser } from "@/lib/server/session";
+import type { Category, CategoryInput } from "@/lib/types";
 
 type WorkspaceRow = typeof workspaces.$inferSelect;
 type ProductRow = typeof products.$inferSelect;
 type TransactionRow = typeof transactions.$inferSelect;
 type TransactionItemRow = typeof transactionItems.$inferSelect;
 type DebtPaymentRow = typeof debtPayments.$inferSelect;
+type CategoryRow = typeof categories.$inferSelect;
 
 type WorkspaceSetupInput = {
   storeName?: string;
@@ -70,6 +72,15 @@ function toDebtPayment(row: DebtPaymentRow): DebtPayment {
     amount: row.amount,
     method: row.method as PaymentMethod,
     createdAt: row.createdAt,
+  };
+}
+
+function toCategory(row: CategoryRow): Category {
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color ?? undefined,
+    icon: row.icon ?? undefined,
   };
 }
 
@@ -129,6 +140,15 @@ async function seedWorkspace(workspace: WorkspaceRow) {
     };
   });
 
+  const categoryRows = seed.categories.map((cat) => ({
+    id: `${workspace.id}-${cat.id}`,
+    workspaceId: workspace.id,
+    name: cat.name,
+    color: cat.color ?? null,
+    icon: cat.icon ?? null,
+    createdAt: new Date().toISOString(),
+  }));
+
   const transactionRows = seed.transactions.map((transaction) => ({
     id: `${workspace.id}-${transaction.id}`,
     workspaceId: workspace.id,
@@ -166,6 +186,10 @@ async function seedWorkspace(workspace: WorkspaceRow) {
   await db.transaction(async (tx) => {
     if (productRows.length) {
       await tx.insert(products).values(productRows);
+    }
+
+    if (categoryRows.length) {
+      await tx.insert(categories).values(categoryRows);
     }
 
     if (transactionRows.length) {
@@ -235,6 +259,11 @@ async function getWorkspaceDebtPayments(workspaceId: string) {
   return rows.map(toDebtPayment);
 }
 
+async function getWorkspaceCategories(workspaceId: string) {
+  const rows = await db.select().from(categories).where(eq(categories.workspaceId, workspaceId)).orderBy(asc(categories.name));
+  return rows.map(toCategory);
+}
+
 async function getWorkspaceTransactions(workspaceId: string) {
   const rows = await db
     .select()
@@ -262,10 +291,11 @@ async function getWorkspaceTransactions(workspaceId: string) {
 
 export async function getBootstrapData(user: SessionUser): Promise<BootstrapData> {
   const workspace = await ensureWorkspace(user);
-  const [allProducts, allTransactions, allDebtPayments] = await Promise.all([
+  const [allProducts, allTransactions, allDebtPayments, allCategories] = await Promise.all([
     getWorkspaceProducts(workspace.id),
     getWorkspaceTransactions(workspace.id),
     getWorkspaceDebtPayments(workspace.id),
+    getWorkspaceCategories(workspace.id),
   ]);
 
   return {
@@ -276,6 +306,7 @@ export async function getBootstrapData(user: SessionUser): Promise<BootstrapData
     profile: formatWorkspaceProfile(workspace),
     settings: formatWorkspaceSettings(workspace),
     products: allProducts,
+    categories: allCategories,
     transactions: allTransactions,
     debtPayments: allDebtPayments,
   };
@@ -543,6 +574,7 @@ export async function resetWorkspaceForUser(user: SessionUser) {
     await tx.delete(debtPayments).where(eq(debtPayments.workspaceId, workspace.id));
     await tx.delete(transactions).where(eq(transactions.workspaceId, workspace.id));
     await tx.delete(products).where(eq(products.workspaceId, workspace.id));
+    await tx.delete(categories).where(eq(categories.workspaceId, workspace.id));
 
     await tx
       .update(workspaces)
@@ -557,4 +589,87 @@ export async function resetWorkspaceForUser(user: SessionUser) {
   const refreshedWorkspace = (await getWorkspaceByUserId(user.id)) ?? workspace;
   await seedWorkspace(refreshedWorkspace);
   return getBootstrapData(user);
+}
+
+export async function createCategoryForUser(user: SessionUser, input: CategoryInput) {
+  const workspace = await ensureWorkspace(user);
+
+  if (!input.name.trim()) {
+    throw new HttpError(400, "Nama kategori wajib diisi.");
+  }
+
+  const id = createId("cat");
+  await db.insert(categories).values({
+    id,
+    workspaceId: workspace.id,
+    name: input.name.trim(),
+    color: input.color ?? null,
+    icon: input.icon ?? null,
+    createdAt: new Date().toISOString(),
+  });
+
+  return {
+    id,
+    name: input.name.trim(),
+    color: input.color ?? undefined,
+    icon: input.icon ?? undefined,
+  } satisfies Category;
+}
+
+export async function updateCategoryForUser(user: SessionUser, id: string, input: CategoryInput) {
+  const workspace = await ensureWorkspace(user);
+
+  if (!input.name.trim()) {
+    throw new HttpError(400, "Nama kategori wajib diisi.");
+  }
+
+  const [oldCategory] = await db
+    .select()
+    .from(categories)
+    .where(and(eq(categories.id, id), eq(categories.workspaceId, workspace.id)))
+    .limit(1);
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(categories)
+      .set({
+        name: input.name.trim(),
+        color: input.color ?? null,
+        icon: input.icon ?? null,
+      })
+      .where(and(eq(categories.id, id), eq(categories.workspaceId, workspace.id)));
+
+    if (oldCategory) {
+      await tx
+        .update(products)
+        .set({ category: input.name.trim() })
+        .where(and(eq(products.workspaceId, workspace.id), eq(products.category, oldCategory.name)));
+    }
+  });
+}
+
+export async function deleteCategoryForUser(user: SessionUser, id: string) {
+  const workspace = await ensureWorkspace(user);
+
+  const [category] = await db
+    .select()
+    .from(categories)
+    .where(and(eq(categories.id, id), eq(categories.workspaceId, workspace.id)))
+    .limit(1);
+
+  if (!category) {
+    throw new HttpError(404, "Kategori tidak ditemukan.");
+  }
+
+  const [isUsed] = await db
+    .select()
+    .from(products)
+    .where(and(eq(products.workspaceId, workspace.id), eq(products.category, category.name)))
+    .limit(1);
+
+  if (isUsed) {
+    throw new HttpError(400, "Kategori tidak bisa dihapus karena masih digunakan oleh produk.");
+  }
+
+  await db.delete(categories).where(and(eq(categories.id, id), eq(categories.workspaceId, workspace.id)));
 }

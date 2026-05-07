@@ -1,6 +1,8 @@
 import { createSeedData } from "@/lib/mock-data";
 import type {
   BootstrapData,
+  Category,
+  CategoryInput,
   CreateDebtPaymentInput,
   CreateTransactionInput,
   DebtPayment,
@@ -34,7 +36,19 @@ function readState(): BootstrapData {
     return seeded;
   }
 
-  return JSON.parse(raw) as BootstrapData;
+  const parsed = JSON.parse(raw) as BootstrapData;
+  if (!parsed.categories) {
+    parsed.categories = [
+      { id: "cat-1", name: "Sembako" },
+      { id: "cat-2", name: "Frozen Food" },
+      { id: "cat-3", name: "Makanan Kering" },
+      { id: "cat-4", name: "Minuman" },
+      { id: "cat-5", name: "Kebutuhan Rumah Tangga" },
+      { id: "cat-6", name: "Lainnya" },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+  }
+  return parsed;
 }
 
 function writeState(next: BootstrapData) {
@@ -280,6 +294,75 @@ export const mockApi = {
       ...state,
       profile: input.profile,
       settings: input.settings,
+    };
+
+    writeState(nextState);
+  },
+
+  async createCategory(input: CategoryInput) {
+    await wait();
+    const state = readState();
+    
+    if (!input.name.trim()) {
+      throw new Error("Nama kategori wajib diisi.");
+    }
+
+    const category: Category = {
+      id: createId("cat"),
+      name: input.name.trim(),
+      color: input.color,
+      icon: input.icon,
+    };
+
+    const nextState = {
+      ...state,
+      categories: [...state.categories, category],
+    };
+
+    writeState(nextState);
+    return clone(category);
+  },
+
+  async updateCategory(id: string, input: CategoryInput) {
+    await wait();
+    const state = readState();
+
+    if (!input.name.trim()) {
+      throw new Error("Nama kategori wajib diisi.");
+    }
+
+    const nextState = {
+      ...state,
+      categories: state.categories.map((c) => (c.id === id ? { ...c, ...input, name: input.name.trim() } : c)),
+      products: state.products.map((p) => {
+        const oldCategory = state.categories.find(c => c.id === id);
+        if (p.category === oldCategory?.name) {
+          return { ...p, category: input.name.trim() };
+        }
+        return p;
+      }),
+    };
+
+    writeState(nextState);
+  },
+
+  async deleteCategory(id: string) {
+    await wait();
+    const state = readState();
+    const category = state.categories.find(c => c.id === id);
+    
+    if (!category) {
+      throw new Error("Kategori tidak ditemukan.");
+    }
+
+    const isUsed = state.products.some(p => p.category === category.name);
+    if (isUsed) {
+      throw new Error("Kategori tidak bisa dihapus karena masih digunakan oleh produk.");
+    }
+
+    const nextState = {
+      ...state,
+      categories: state.categories.filter(c => c.id !== id),
     };
 
     writeState(nextState);

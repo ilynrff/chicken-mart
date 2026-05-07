@@ -1,4 +1,4 @@
-import type { BootstrapData, DebtPayment, Product, Transaction } from "@/lib/types";
+import type { BootstrapData, Category, DebtPayment, Product, Transaction } from "@/lib/types";
 
 function hoursAgo(hours: number) {
   return new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
@@ -7,6 +7,15 @@ function hoursAgo(hours: number) {
 function daysAgo(days: number) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 }
+
+const categories: Category[] = [
+  { id: "cat-1", name: "Sembako" },
+  { id: "cat-2", name: "Frozen Food" },
+  { id: "cat-3", name: "Makanan Kering" },
+  { id: "cat-4", name: "Minuman" },
+  { id: "cat-5", name: "Kebutuhan Rumah Tangga" },
+  { id: "cat-6", name: "Lainnya" },
+];
 
 const products: Product[] = [
   {
@@ -267,6 +276,7 @@ export function createSeedData(): BootstrapData {
       defaultMinimumStock: 8,
     },
     products,
+    categories,
     transactions,
     debtPayments,
   };
