@@ -298,8 +298,8 @@ export default function InventarisPage() {
                   <Input 
                     id="stock" 
                     type="number" 
-                    value={form.stock} 
-                    onChange={(e) => setForm(c => ({ ...c, stock: Number(e.target.value) }))} 
+                    value={form.stock === 0 ? "" : form.stock} 
+                    onChange={(e) => setForm(c => ({ ...c, stock: e.target.value ? Number(e.target.value) : 0 }))} 
                     className="h-10 bg-white/5 border-white/10 text-white focus:bg-white/[0.08] focus:border-red-500/40 transition-all" 
                   />
                 </div>
@@ -308,8 +308,8 @@ export default function InventarisPage() {
                   <Input 
                     id="minimum-stock" 
                     type="number" 
-                    value={form.minimumStock} 
-                    onChange={(e) => setForm(c => ({ ...c, minimumStock: Number(e.target.value) }))} 
+                    value={form.minimumStock === 0 ? "" : form.minimumStock} 
+                    onChange={(e) => setForm(c => ({ ...c, minimumStock: e.target.value ? Number(e.target.value) : 0 }))} 
                     className="h-10 bg-white/5 border-white/10 text-white focus:bg-white/[0.08] focus:border-red-500/40 transition-all" 
                   />
                 </div>
@@ -361,8 +361,8 @@ export default function InventarisPage() {
                   id="restock-qty" 
                   type="number" 
                   min={1} 
-                  value={restockQty} 
-                  onChange={(e) => setRestockQty(Number(e.target.value))} 
+                  value={restockQty || ""} 
+                  onChange={(e) => setRestockQty(e.target.value ? Number(e.target.value) : 0)} 
                   className="h-14 bg-white/5 border-white/10 text-white text-2xl font-black text-center focus:bg-white/[0.08] focus:border-blue-500/40 transition-all rounded-2xl" 
                 />
               </div>

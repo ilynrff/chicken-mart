@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CreditCard,
   Minus,
@@ -43,6 +43,34 @@ export default function KasirPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => setIsDragging(false);
+  const handleMouseUp = () => setIsDragging(false);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft += e.deltaY;
+    }
+  };
 
   useEffect(() => {
     if (!data) return;
@@ -149,36 +177,50 @@ export default function KasirPage() {
           </div>
         </div>
 
-        {/* SEARCH & FILTER (Cleaner) */}
-        <div className="flex flex-col lg:flex-row gap-3 flex-shrink-0">
-          <div className="flex flex-1 lg:max-w-md items-center rounded-xl border border-white/10 bg-black/20 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-500/50 transition-all shadow-sm h-11">
-            <div className="pl-4 pr-2.5 flex items-center justify-center pointer-events-none">
-              <Search className="size-4 text-slate-400" />
-            </div>
+        {/* SEARCH & FILTER (Premium Refinement) */}
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 flex-shrink-0">
+          {/* Compact Search Box */}
+          <div className="relative group w-full lg:w-60 shrink-0">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-500 group-focus-within:text-red-500 transition-colors" />
             <input
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Cari nama barang atau kategori..."
-              className="flex-1 w-full bg-transparent text-sm text-white placeholder:text-slate-500 outline-none border-none pr-4"
+              placeholder="Cari menu..."
+              className="h-10 w-full rounded-2xl border border-white/10 bg-white/5 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/40 focus:bg-white/10 transition-all shadow-inner"
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar">
-            {categories.map((item) => (
-              <Button
-                key={item}
-                type="button"
-                variant={category === item ? "default" : "outline"}
-                onClick={() => setCategory(item)}
-                className={cn(
-                  "h-11 px-4 rounded-xl whitespace-nowrap",
-                  category === item ? "bg-red-500/20 text-red-400 border-red-500/30 shadow-none glow-none" : "border-white/10 bg-white/5 text-slate-300"
-                )}
-              >
-                {item}
-              </Button>
-            ))}
+          {/* Category Chips with Edge Fade */}
+          <div className="relative flex-1 min-w-0">
+            <div 
+              ref={scrollRef}
+              onWheel={handleWheel}
+              onMouseDown={handleMouseDown}
+              onMouseLeave={handleMouseLeave}
+              onMouseUp={handleMouseUp}
+              onMouseMove={handleMouseMove}
+              className={cn(
+                "flex gap-2 overflow-x-auto hide-scrollbar edge-fade-both py-1 px-4 select-none scroll-smooth",
+                isDragging ? "cursor-grabbing" : "cursor-grab"
+              )}
+            >
+              {categories.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setCategory(item)}
+                  className={cn(
+                    "h-9 px-5 rounded-full whitespace-nowrap text-xs font-bold uppercase tracking-wider transition-all duration-300 border",
+                    category === item 
+                      ? "bg-gradient-to-r from-red-600 to-red-500 text-white border-red-500/50 shadow-[0_4px_12px_rgba(220,38,38,0.3)] scale-105 z-10" 
+                      : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 hover:border-white/20"
+                  )}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
