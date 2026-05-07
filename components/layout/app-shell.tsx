@@ -12,6 +12,7 @@ import {
   Settings2,
   Store,
   Plus,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, initials } from "@/lib/utils";
@@ -42,9 +43,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-red-700 text-white shadow-[0_0_15px_rgba(229,57,53,0.4)]">
               <Store className="size-5" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-white">{data?.profile.name ?? "Chicken Mart"}</h1>
-              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-widest">POS System</p>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold tracking-tight text-white truncate">{data?.profile.name ?? "Chicken Mart"}</h1>
+              <p className="text-[10px] font-bold text-red-500/80 uppercase tracking-widest leading-tight">POS System</p>
+              <div className="flex items-start gap-1 mt-1 text-slate-400">
+                <MapPin className="size-3 shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-tight line-clamp-2 italic opacity-80">
+                  {data?.profile.address || "Alamat belum diatur"}
+                </p>
+              </div>
             </div>
           </div>
 

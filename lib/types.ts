@@ -60,6 +60,12 @@ export type DebtPayment = {
   createdAt: string;
 };
 
+export type RichDebtPayment = DebtPayment & {
+  customerName: string;
+  originalTransactionDate: string;
+  remainingDebtAfter: number;
+};
+
 export type CartItem = {
   productId: string;
   qty: number;
@@ -68,6 +74,7 @@ export type CartItem = {
 export type RevenuePoint = {
   label: string;
   omzet: number;
+  kasMasuk: number;
   laba: number;
   transaksi: number;
   bucketStart: string;
@@ -94,11 +101,27 @@ export type ReportDateRange = {
   isCustom: boolean;
 };
 
+export type ReportComparison = {
+  trend: "up" | "down" | "neutral";
+  percentage: number;
+};
+
+export type PaymentMethodSummary = {
+  method: PaymentMethod;
+  amount: number;
+  percentage: number;
+};
+
 export type ReportSummary = {
   period: ReportPeriod;
   omzet: number;
+  omzetComparison: ReportComparison;
   pembayaranHutang: number;
   totalKasMasuk: number;
+  kasTunai: number;
+  uangDigital: number;
+  piutangAktif: number;
+  paymentMethodBreakdown: PaymentMethodSummary[];
   hpp: number;
   labaKotor: number;
   labaBersih: number;
@@ -108,6 +131,9 @@ export type ReportSummary = {
   soldProducts: SoldProductDetail[];
   revenueSeries: RevenuePoint[];
   dateRange: ReportDateRange;
+  insights: string[];
+  filteredTransactions: Transaction[];
+  filteredDebtPayments: RichDebtPayment[];
 };
 
 export type BootstrapData = {
@@ -153,6 +179,7 @@ export type DashboardInsight = {
 
 export type DashboardMetrics = {
   omzetHariIni: number;
+  kasMasukHariIni: number;
   transaksiHariIni: number;
   stokMenipis: number;
   totalKasbon: number;

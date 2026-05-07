@@ -45,6 +45,16 @@ export function startOfDay(date = new Date()) {
   return next;
 }
 
+export function isToday(dateInput: string | Date) {
+  const date = new Date(dateInput);
+  const today = new Date();
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  );
+}
+
 export function createId(prefix: string) {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `${prefix}-${crypto.randomUUID()}`;

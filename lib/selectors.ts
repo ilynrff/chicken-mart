@@ -7,7 +7,7 @@ import type {
   TopProduct,
   Transaction,
 } from "@/lib/types";
-import { formatCurrency, formatNumber, startOfDay } from "@/lib/utils";
+import { formatCurrency, formatNumber, isToday, startOfDay } from "@/lib/utils";
 
 type ReportSummaryOptions = {
   dateFrom?: string | null;
@@ -128,12 +128,19 @@ export function getDashboardMetrics(data: BootstrapData): DashboardMetrics {
   const weeklySummary = getReportSummary(data, "mingguan");
   const stokHabis = data.products.filter((product) => product.stock === 0).length;
   const pelangganKasbonAktif = data.transactions.filter((t) => t.paymentMethod === "Hutang" && t.status === "UNPAID").length;
+
+  const todayDebtPayments = data.debtPayments.filter((dp) => isToday(dp.createdAt));
+  const omzetHariIni = todayTransactions.reduce((sum, t) => sum + t.total, 0);
+  const kasMasukHariIni = todayTransactions.filter(t => t.paymentMethod !== "Hutang").reduce((sum, t) => sum + t.total, 0)
+                        + todayDebtPayments.reduce((sum, dp) => sum + dp.amount, 0);
+
   const avgBelanjaHariIni = todayTransactions.length
-    ? todayTransactions.reduce((sum, transaction) => sum + transaction.total, 0) / todayTransactions.length
+    ? omzetHariIni / todayTransactions.length
     : 0;
 
   return {
-    omzetHariIni: todayTransactions.reduce((sum, transaction) => sum + transaction.total, 0),
+    omzetHariIni,
+    kasMasukHariIni,
     transaksiHariIni: todayTransactions.length,
     stokMenipis: data.products.filter((product) => product.stock <= product.minimumStock).length,
     totalKasbon: data.transactions
@@ -212,12 +219,55 @@ export function getReportSummary(
   const filtered = data.transactions.filter((transaction) => isInRange(transaction.createdAt, range.from, range.to));
   const filteredDebtPayments = data.debtPayments.filter((dp) => isInRange(dp.createdAt, range.from, range.to));
 
+  const diffMs = range.to.getTime() - range.from.getTime();
+  const prevFrom = new Date(range.from.getTime() - diffMs - 1);
+  const prevTo = new Date(range.from.getTime() - 1);
+
   const omzet = filtered.reduce((sum, transaction) => sum + transaction.total, 0);
   const pembayaranHutang = filteredDebtPayments.reduce((sum, dp) => sum + dp.amount, 0);
+
+  let trend: "up" | "down" | "neutral" = "neutral";
+  let percentage = 0;
+  const prevFiltered = data.transactions.filter((t) => isInRange(t.createdAt, prevFrom, prevTo));
+  const prevOmzet = prevFiltered.reduce((sum, t) => sum + t.total, 0);
+  
+  if (prevOmzet > 0) {
+    percentage = ((omzet - prevOmzet) / prevOmzet) * 100;
+    if (percentage > 0.1) trend = "up";
+    else if (percentage < -0.1) trend = "down";
+  } else if (omzet > 0) {
+    percentage = 100;
+    trend = "up";
+  }
+
+  const omzetComparison = {
+    trend,
+    percentage: Math.abs(percentage),
+  };
   
   // Kas Masuk = (Total Omzet - Omzet dari transaksi Hutang) + Pembayaran Hutang
   const penjualanCash = filtered.filter(t => t.paymentMethod !== "Hutang").reduce((sum, t) => sum + t.total, 0);
   const totalKasMasuk = penjualanCash + pembayaranHutang;
+
+  const piutangAktif = filtered.filter(t => t.paymentMethod === "Hutang").reduce((sum, t) => {
+    const paid = data.debtPayments.filter(dp => dp.transactionId === t.id).reduce((s, dp) => s + dp.amount, 0);
+    return sum + (t.total - paid);
+  }, 0);
+
+  const kasTunai = filtered.filter(t => t.paymentMethod === "Tunai").reduce((sum, t) => sum + t.total, 0) 
+                 + filteredDebtPayments.filter(dp => dp.method === "Tunai").reduce((sum, dp) => sum + dp.amount, 0);
+  
+  const uangDigital = filtered.filter(t => t.paymentMethod === "QRIS" || t.paymentMethod === "Transfer").reduce((sum, t) => sum + t.total, 0)
+                    + filteredDebtPayments.filter(dp => dp.method === "QRIS" || dp.method === "Transfer").reduce((sum, dp) => sum + dp.amount, 0);
+
+  const paymentMethodBreakdown = (["Tunai", "QRIS", "Transfer", "Hutang"] as PaymentMethod[]).map(method => {
+    const amount = filtered.filter(t => t.paymentMethod === method).reduce((sum, t) => sum + t.total, 0);
+    return {
+      method,
+      amount,
+      percentage: omzet > 0 ? (amount / omzet) * 100 : 0
+    };
+  });
 
   const hpp = filtered.reduce(
     (sum, transaction) =>
@@ -273,6 +323,7 @@ export function getReportSummary(
     const current = bucketMap.get(bucket.key) ?? {
       label: bucket.label,
       omzet: 0,
+      kasMasuk: 0,
       laba: 0,
       transaksi: 0,
       bucketStart: bucket.bucketStart,
@@ -280,8 +331,26 @@ export function getReportSummary(
     const cogs = transaction.items.reduce((sum, item) => sum + item.buyPrice * item.qty, 0);
 
     current.omzet += transaction.total;
+    if (transaction.paymentMethod !== "Hutang") {
+      current.kasMasuk += transaction.total;
+    }
     current.laba += transaction.total - cogs;
     current.transaksi += 1;
+    bucketMap.set(bucket.key, current);
+  }
+
+  for (const dp of filteredDebtPayments) {
+    const date = new Date(dp.createdAt);
+    const bucket = getBucketMeta(date, period, range.isCustom);
+    const current = bucketMap.get(bucket.key) ?? {
+      label: bucket.label,
+      omzet: 0,
+      kasMasuk: 0,
+      laba: 0,
+      transaksi: 0,
+      bucketStart: bucket.bucketStart,
+    };
+    current.kasMasuk += dp.amount;
     bucketMap.set(bucket.key, current);
   }
 
@@ -290,16 +359,46 @@ export function getReportSummary(
     .map((values) => ({
       label: values.label,
       omzet: values.omzet,
+      kasMasuk: values.kasMasuk,
       laba: values.laba,
       transaksi: values.transaksi,
       bucketStart: values.bucketStart,
     }));
 
+  const insights: string[] = [];
+  if (revenueSeries.length > 0) {
+    const highestDay = [...revenueSeries].sort((a, b) => b.omzet - a.omzet)[0];
+    const lowestDay = [...revenueSeries].sort((a, b) => a.omzet - b.omzet)[0];
+    if (highestDay && highestDay.omzet > 0) {
+      insights.push(`Penjualan tertinggi terjadi pada ${highestDay.label} (${formatCurrency(highestDay.omzet)}).`);
+    }
+    if (lowestDay && lowestDay.omzet > 0 && lowestDay.label !== highestDay?.label) {
+      insights.push(`Hari paling sepi adalah ${lowestDay.label}.`);
+    }
+  }
+
+  if (topProducts.length > 0) {
+    insights.push(`Produk paling diminati: ${topProducts[0].productName}.`);
+  } else {
+    insights.push("Belum ada data penjualan produk yang cukup.");
+  }
+
+  if (trend === "up") {
+    insights.push(`Penjualan meningkat ${Math.round(omzetComparison.percentage)}% dibandingkan periode sebelumnya.`);
+  } else if (trend === "down") {
+    insights.push(`Penjualan menurun ${Math.round(omzetComparison.percentage)}% dibandingkan periode sebelumnya.`);
+  }
+
   return {
     period,
     omzet,
+    omzetComparison,
     pembayaranHutang,
     totalKasMasuk,
+    kasTunai,
+    uangDigital,
+    piutangAktif,
+    paymentMethodBreakdown,
     hpp,
     labaKotor,
     labaBersih,
@@ -314,5 +413,24 @@ export function getReportSummary(
       label: range.label,
       isCustom: range.isCustom,
     },
+    insights,
+    filteredTransactions: filtered,
+    filteredDebtPayments: filteredDebtPayments.map(dp => {
+      const trx = data.transactions.find(t => t.id === dp.transactionId);
+      const allTrxPayments = data.debtPayments
+        .filter(p => p.transactionId === dp.transactionId)
+        .sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt));
+      
+      const paymentIndex = allTrxPayments.findIndex(p => p.id === dp.id);
+      const paidSoFar = allTrxPayments.slice(0, paymentIndex + 1).reduce((s, p) => s + p.amount, 0);
+      const remaining = (trx?.total ?? 0) - paidSoFar;
+
+      return {
+        ...dp,
+        customerName: trx?.customerName ?? "Pelanggan",
+        originalTransactionDate: trx?.createdAt ?? dp.createdAt,
+        remainingDebtAfter: remaining,
+      };
+    }),
   };
 }

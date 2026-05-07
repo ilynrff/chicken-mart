@@ -69,9 +69,15 @@ export default function DashboardPage() {
           
           <div className="p-6 relative z-10 border-b border-white/5">
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-slate-400 mb-1">Omzet Hari Ini</p>
-                <h3 className="text-4xl font-black text-white tracking-tight">{formatCurrency(metrics.omzetHariIni)}</h3>
+              <div className="flex gap-8">
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Penjualan Hari Ini</p>
+                  <h3 className="text-4xl font-black text-white tracking-tight">{formatCurrency(metrics.omzetHariIni)}</h3>
+                </div>
+                <div className="border-l border-white/10 pl-8">
+                  <p className="text-xs font-medium text-emerald-500 uppercase tracking-wider mb-2">Kas Masuk Hari Ini</p>
+                  <h3 className="text-2xl font-black text-emerald-400 tracking-tight">{formatCurrency(metrics.kasMasukHariIni)}</h3>
+                </div>
               </div>
               <div className="flex items-center gap-2 bg-red-500/10 px-3 py-1.5 rounded-full border border-red-500/20">
                 <TrendingUp className="size-4 text-red-400" />
