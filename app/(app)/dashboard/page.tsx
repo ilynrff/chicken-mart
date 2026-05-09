@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   Banknote,
@@ -25,6 +26,11 @@ import { cn, formatCurrency, formatDateTime, formatNumber } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data } = useData();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!data) {
     return null;
@@ -69,8 +75,8 @@ export default function DashboardPage() {
       {/* Top Grid: Main Chart & Insight */}
       <motion.div 
         variants={{
-          hidden: { opacity: 0, y: 20 },
-          visible: { opacity: 1, y: 0 }
+          hidden: { opacity: 0, filter: "blur(4px)" },
+          visible: { opacity: 1, filter: "blur(0px)" }
         }}
         className="grid gap-6 xl:grid-cols-[1.5fr_1fr]"
       >
@@ -100,9 +106,9 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          <div className="p-6 flex-1 min-h-[300px]">
-            {weeklyReport.revenueSeries.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
+          <div className="p-6 h-[300px] w-full relative">
+            {mounted && weeklyReport.revenueSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={weeklyReport.revenueSeries} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorOmzetRed" x1="0" y1="0" x2="0" y2="1">
@@ -142,11 +148,11 @@ export default function DashboardPage() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
-            ) : (
+            ) : weeklyReport.revenueSeries.length === 0 ? (
               <div className="flex h-full items-center justify-center border border-dashed border-white/10 rounded-xl">
                 <p className="text-sm font-medium text-slate-500">Belum ada data penjualan minggu ini.</p>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -195,8 +201,8 @@ export default function DashboardPage() {
       {/* Bottom Grid: Transactions & Stock */}
       <motion.div 
         variants={{
-          hidden: { opacity: 0, y: 20 },
-          visible: { opacity: 1, y: 0 }
+          hidden: { opacity: 0, filter: "blur(4px)" },
+          visible: { opacity: 1, filter: "blur(0px)" }
         }}
         className="grid gap-6 xl:grid-cols-[1.5fr_1fr]"
       >

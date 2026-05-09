@@ -251,8 +251,8 @@ export default function KasirPage() {
                     <motion.div
                       key={product.id}
                       variants={{
-                        hidden: { opacity: 0, y: 20 },
-                        visible: { opacity: 1, y: 0 }
+                        hidden: { opacity: 0, filter: "blur(4px)" },
+                        visible: { opacity: 1, filter: "blur(0px)" }
                       }}
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     >

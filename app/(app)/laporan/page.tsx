@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Area,
   Bar,
@@ -151,6 +151,11 @@ export default function LaporanPage() {
   const [period, setPeriod] = useState<ReportPeriod>("harian");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!data) return null;
 
@@ -308,9 +313,9 @@ export default function LaporanPage() {
             <CardTitle className="text-white text-lg">Grafik Penjualan & Arus Kas</CardTitle>
             <CardDescription className="text-slate-400">Perbandingan omzet (penjualan) vs kas masuk nyata</CardDescription>
           </CardHeader>
-          <CardContent className="h-[380px] p-4 sm:p-6 flex-1 min-h-0">
-            {activeSummary.revenueSeries.length && !invalidRange ? (
-              <ResponsiveContainer width="100%" height="100%">
+          <CardContent className="h-[380px] p-4 sm:p-6 relative">
+            {mounted && activeSummary.revenueSeries.length && !invalidRange ? (
+              <ResponsiveContainer width="100%" height={350}>
                 <ComposedChart data={activeSummary.revenueSeries} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="omzetDarkGrad" x1="0" x2="0" y1="0" y2="1">
