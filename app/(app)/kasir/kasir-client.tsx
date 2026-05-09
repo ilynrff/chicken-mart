@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PaymentMethod, Product, BootstrapData } from "@/lib/types";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, getInvoiceDisplay } from "@/lib/utils";
 import { toast } from "sonner";
 import React, { memo } from "react";
 
@@ -157,7 +157,7 @@ export function KasirClient({ initialData }: KasirClientProps) {
       setCustomerPhone("");
       setDueDate("");
       toast.success("Checkout Berhasil", {
-        description: `Total transaksi ${formatCurrency(transaction.total)} telah dicatat.`,
+        description: `Invoice ${getInvoiceDisplay(transaction)} - Total ${formatCurrency(transaction.total)} telah dicatat.`,
         duration: 3000,
       });
       // Auto-close on mobile only

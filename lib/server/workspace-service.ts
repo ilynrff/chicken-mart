@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, debtPayments, products, transactionItems, transactions, workspaces } from "@/lib/db/schema";
 import { createSeedData } from "@/lib/mock-data";
@@ -109,6 +109,7 @@ function buildTransactionList(rows: TransactionRow[], items: TransactionItemRow[
     customerPhone: row.customerPhone,
     dueDate: row.dueDate,
     total: row.total,
+    invoiceCode: row.invoiceCode,
     items: itemMap.get(row.id) ?? [],
   }));
 }
@@ -149,17 +150,22 @@ async function seedWorkspace(workspace: WorkspaceRow) {
     createdAt: new Date().toISOString(),
   }));
 
-  const transactionRows = seed.transactions.map((transaction) => ({
-    id: `${workspace.id}-${transaction.id}`,
-    workspaceId: workspace.id,
-    paymentMethod: transaction.paymentMethod,
-    status: transaction.status ?? "PAID",
-    customerName: transaction.customerName ?? null,
-    customerPhone: transaction.customerPhone ?? null,
-    dueDate: transaction.dueDate ?? null,
-    total: transaction.total,
-    createdAt: transaction.createdAt,
-  }));
+  const transactionRows = seed.transactions.map((transaction, idx) => {
+    const dateStr = new Date(transaction.createdAt).toISOString().slice(0, 10).replace(/-/g, "");
+    const seq = (idx + 1).toString().padStart(4, "0");
+    return {
+      id: `${workspace.id}-${transaction.id}`,
+      workspaceId: workspace.id,
+      paymentMethod: transaction.paymentMethod,
+      status: transaction.status ?? "PAID",
+      customerName: transaction.customerName ?? null,
+      customerPhone: transaction.customerPhone ?? null,
+      dueDate: transaction.dueDate ?? null,
+      total: transaction.total,
+      invoiceCode: `CM-${dateStr}-${seq}`,
+      createdAt: transaction.createdAt,
+    };
+  });
 
   const itemRows = seed.transactions.flatMap((transaction) =>
     transaction.items.map((item) => ({
@@ -358,6 +364,27 @@ export async function createTransactionForUser(user: SessionUser, input: CreateT
   const now = new Date().toISOString();
   const total = normalizedItems.reduce((sum, item) => sum + item.subtotal, 0);
 
+  // Generate human-readable invoice code: CM-YYYYMMDD-XXXX
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const [dailyCount] = await db
+    .select({ count: count() })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.workspaceId, workspace.id),
+        gte(transactions.createdAt, today.toISOString()),
+        lt(transactions.createdAt, tomorrow.toISOString())
+      )
+    );
+  
+  const nextSeq = (Number(dailyCount.count) + 1).toString().padStart(4, "0");
+  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
+  const invoiceCode = `CM-${dateStr}-${nextSeq}`;
+
   await db.transaction(async (tx) => {
     for (const item of normalizedItems) {
       await tx
@@ -378,6 +405,7 @@ export async function createTransactionForUser(user: SessionUser, input: CreateT
       customerPhone: input.customerPhone ?? null,
       dueDate: input.dueDate ?? null,
       total,
+      invoiceCode,
       createdAt: now,
     });
 
@@ -404,6 +432,7 @@ export async function createTransactionForUser(user: SessionUser, input: CreateT
     customerPhone: input.customerPhone ?? null,
     dueDate: input.dueDate ?? null,
     total,
+    invoiceCode,
     items: normalizedItems.map((item) => ({
       productId: item.product.id,
       productName: item.product.name,

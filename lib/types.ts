@@ -62,6 +62,7 @@ export type Transaction = {
   customerPhone: string | null;
   dueDate: string | null;
   total: number;
+  invoiceCode?: string | null;
   items: TransactionItem[];
 };
 

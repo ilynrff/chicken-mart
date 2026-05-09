@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   Bar,
@@ -20,7 +20,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { getReportSummary } from "@/lib/selectors";
 import type { ReportPeriod, ReportSummary } from "@/lib/types";
-import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, formatDateTime, formatNumber, getInvoiceDisplay } from "@/lib/utils";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogFooter, 
+  DialogTitle, 
+  DialogDescription 
+} from "@/components/ui/dialog";
+import type { Transaction } from "@/lib/types";
 
 const periodLabels: Record<ReportPeriod, string> = { harian: "harian", mingguan: "mingguan", bulanan: "bulanan" };
 
@@ -46,53 +55,103 @@ function downloadReportCsv(summary: ReportSummary, storeName: string, activeLabe
   URL.revokeObjectURL(url);
 }
 
-function RiwayatPenjualan({ summary }: { summary: ReportSummary }) {
+function RiwayatPenjualan({ summary, allDebtPayments }: { summary: ReportSummary, allDebtPayments: any[] }) {
+  const [methodFilter, setMethodFilter] = useState<string>("Semua");
+  const [selectedTrx, setSelectedTrx] = useState<Transaction | null>(null);
+
+  const methods = ["Semua", "Tunai", "QRIS", "Transfer", "Hutang"];
+
+  const filtered = useMemo(() => {
+    if (methodFilter === "Semua") return summary.filteredTransactions;
+    return summary.filteredTransactions.filter(t => t.paymentMethod === methodFilter);
+  }, [summary.filteredTransactions, methodFilter]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  }, [filtered]);
+
   return (
-    <Card className="flex flex-col overflow-hidden border-white/5">
-      <CardHeader className="border-b border-white/5 pb-4">
-        <CardTitle className="text-white text-lg">Riwayat Penjualan</CardTitle>
-        <CardDescription className="text-slate-400">Daftar lengkap transaksi pada periode ini.</CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        {summary.filteredTransactions.length > 0 ? (
-          <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap relative">
-              <thead className="bg-black/90 text-slate-400 sticky top-0 z-10 backdrop-blur-md">
-                <tr>
-                  <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px]">Tanggal</th>
-                  <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px]">Item</th>
-                  <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px]">Qty</th>
-                  <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px]">Metode</th>
-                  <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px] text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-white">
-                {[...summary.filteredTransactions].sort((a,b) => +new Date(b.createdAt) - +new Date(a.createdAt)).map((trx) => (
-                  <tr key={trx.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-4 text-slate-300">{formatDate(trx.createdAt)}</td>
-                    <td className="px-6 py-4 font-semibold max-w-[200px] truncate">{trx.items.map(i => i.productName).join(", ")}</td>
-                    <td className="px-6 py-4 text-slate-300">{trx.items.reduce((sum, item) => sum + item.qty, 0)}</td>
-                    <td className="px-6 py-4">
-                      <Badge variant="outline" className={trx.paymentMethod === "Hutang" ? "border-amber-500/30 text-amber-400 bg-amber-500/10" : "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"}>
-                        {trx.paymentMethod}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 font-bold text-white text-right">{formatCurrency(trx.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <div className="rounded-full bg-white/5 p-4 mb-3 border border-white/10">
-              <TrendingUp className="size-6 text-slate-500" />
+    <>
+      <Card className="flex flex-col overflow-hidden border-white/5">
+        <CardHeader className="border-b border-white/5 pb-4 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-white text-lg">Riwayat Penjualan</CardTitle>
+              <CardDescription className="text-slate-400">Daftar lengkap transaksi pada periode ini.</CardDescription>
             </div>
-            <p className="text-sm font-medium text-white">Belum ada transaksi</p>
+            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white/5 rounded-xl border border-white/10 w-fit">
+              {methods.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMethodFilter(m)}
+                  className={cn(
+                    "px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                    methodFilter === m 
+                      ? "bg-red-600 text-white shadow-lg glow-red" 
+                      : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                  )}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="p-0">
+          {sorted.length > 0 ? (
+            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap relative">
+                <thead className="bg-black/90 text-slate-400 sticky top-0 z-10 backdrop-blur-md">
+                  <tr>
+                    <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px]">Invoice</th>
+                    <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px]">Tanggal</th>
+                    <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px]">Item</th>
+                    <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px]">Qty</th>
+                    <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px]">Metode</th>
+                    <th className="px-6 py-4 font-medium uppercase tracking-widest text-[11px] text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 text-white">
+                  {sorted.map((trx) => (
+                    <tr 
+                      key={trx.id} 
+                      className="hover:bg-white/5 transition-colors cursor-pointer group"
+                      onClick={() => setSelectedTrx(trx)}
+                    >
+                      <td className="px-6 py-4 text-xs font-black text-white/50 group-hover:text-red-400 transition-colors">{getInvoiceDisplay(trx)}</td>
+                      <td className="px-6 py-4 text-slate-300 group-hover:text-white transition-colors">{formatDate(trx.createdAt)}</td>
+                      <td className="px-6 py-4 font-semibold max-w-[200px] truncate">{trx.items.map(i => i.productName).join(", ")}</td>
+                      <td className="px-6 py-4 text-slate-300">{trx.items.reduce((sum, item) => sum + item.qty, 0)}</td>
+                      <td className="px-6 py-4">
+                        <Badge variant="outline" className={trx.paymentMethod === "Hutang" ? "border-amber-500/30 text-amber-400 bg-amber-500/10" : "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"}>
+                          {trx.paymentMethod}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-white text-right">{formatCurrency(trx.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="rounded-full bg-white/5 p-4 mb-3 border border-white/10">
+                <TrendingUp className="size-6 text-slate-500" />
+              </div>
+              <p className="text-sm font-medium text-white">Tidak ada transaksi ditemukan</p>
+              <p className="text-xs text-slate-500 mt-1">Gunakan filter atau ubah rentang tanggal.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <TransactionDetailDialog 
+        transaction={selectedTrx} 
+        open={!!selectedTrx} 
+        onOpenChange={(open) => !open && setSelectedTrx(null)}
+        debtPayments={allDebtPayments.filter(dp => dp.transactionId === selectedTrx?.id)}
+      />
+    </>
   );
 }
 
@@ -143,6 +202,113 @@ function RiwayatPembayaran({ summary }: { summary: ReportSummary }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function TransactionDetailDialog({ transaction, open, onOpenChange, debtPayments }: { 
+  transaction: Transaction | null, 
+  open: boolean, 
+  onOpenChange: (open: boolean) => void,
+  debtPayments: any[]
+}) {
+  if (!transaction) return null;
+
+  const totalQty = transaction.items.reduce((sum, i) => sum + i.qty, 0);
+  const totalPaid = debtPayments.reduce((sum, p) => sum + p.amount, 0);
+  const remainingDebt = transaction.total - totalPaid;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="glass-card border border-white/10 text-white p-0 overflow-hidden sm:max-w-[500px] rounded-3xl">
+        <DialogHeader className="p-8 pb-6 bg-gradient-to-b from-white/[0.08] to-transparent">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/80">Detail Transaksi</p>
+              <DialogTitle className="text-xl font-black tracking-tight">{getInvoiceDisplay(transaction)}</DialogTitle>
+              <DialogDescription className="text-slate-400 text-xs font-medium">{formatDateTime(transaction.createdAt)}</DialogDescription>
+            </div>
+            <Badge className={transaction.paymentMethod === "Hutang" ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400"}>
+              {transaction.paymentMethod}
+            </Badge>
+          </div>
+        </DialogHeader>
+
+        <div className="px-8 pb-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+          {/* Section: Customer Info (if Hutang) */}
+          {transaction.paymentMethod === "Hutang" && (
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+              <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Data Pelanggan</p>
+              <p className="font-bold text-white text-base">{transaction.customerName || "Anonim"}</p>
+              <p className="text-xs text-slate-400">{transaction.customerPhone || "-"}</p>
+            </div>
+          )}
+
+          {/* Section: Items */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Daftar Belanja</span>
+            </div>
+            <div className="space-y-3">
+              {transaction.items.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-start group">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-white truncate">{item.productName}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{item.qty} x {formatCurrency(item.sellPrice)}</p>
+                  </div>
+                  <p className="text-sm font-black text-white ml-4">{formatCurrency(item.subtotal)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section: Payment Breakdown */}
+          <div className="space-y-3 pt-3 border-t border-white/5">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-slate-400 font-medium">Total Item</span>
+              <span className="text-white font-bold">{totalQty} item</span>
+            </div>
+            <div className="flex justify-between items-center text-lg">
+              <span className="text-white font-black uppercase tracking-wider text-xs">Total Transaksi</span>
+              <span className="text-white font-black tracking-tighter">{formatCurrency(transaction.total)}</span>
+            </div>
+          </div>
+
+          {/* Section: Debt History (if applicable) */}
+          {transaction.paymentMethod === "Hutang" && (
+            <div className="space-y-3 pt-3 border-t border-white/5">
+              <div className="flex items-center gap-2 pb-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">Riwayat Angsuran</span>
+              </div>
+              <div className="space-y-2">
+                {debtPayments.length > 0 ? (
+                  debtPayments.map((dp, i) => (
+                    <div key={i} className="flex justify-between items-center p-2.5 rounded-xl bg-white/5 border border-white/5 text-xs">
+                      <span className="text-slate-400">{formatDate(dp.createdAt)}</span>
+                      <span className="text-emerald-400 font-bold">+{formatCurrency(dp.amount)}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[10px] text-slate-500 italic">Belum ada pembayaran cicilan.</p>
+                )}
+                <div className="flex justify-between items-center p-3 mt-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">Sisa Hutang</span>
+                  <span className="text-base font-black text-white">{formatCurrency(remainingDebt)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="p-8 pt-4 bg-white/[0.02]">
+          <Button 
+            className="w-full h-12 rounded-2xl font-bold bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10"
+            onClick={() => onOpenChange(false)}
+          >
+            Tutup Detail
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -389,7 +555,7 @@ export default function LaporanPage() {
       </section>
 
       <section className="grid gap-6">
-        <RiwayatPenjualan summary={activeSummary} />
+        <RiwayatPenjualan summary={activeSummary} allDebtPayments={data.debtPayments} />
         <RiwayatPembayaran summary={activeSummary} />
       </section>
     </div>

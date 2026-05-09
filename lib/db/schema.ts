@@ -60,6 +60,7 @@ export const transactions = pgTable(
     customerPhone: text("customer_phone"),
     dueDate: text("due_date"),
     total: integer("total").notNull(),
+    invoiceCode: text("invoice_code"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).notNull(),
   },
   (table) => ({

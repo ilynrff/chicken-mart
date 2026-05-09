@@ -22,7 +22,7 @@ import { useData } from "@/components/providers/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getDashboardMetrics, getReportSummary } from "@/lib/selectors";
-import { cn, formatCurrency, formatDateTime, formatNumber } from "@/lib/utils";
+import { cn, formatCurrency, formatDateTime, formatNumber, getInvoiceDisplay } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { data } = useData();
@@ -235,6 +235,9 @@ export default function DashboardPage() {
                           <Clock className="size-3 text-slate-500" />
                           <span className="text-xs text-slate-400">
                             {formatDateTime(transaction.createdAt)}
+                          </span>
+                          <span className="text-[10px] font-black text-red-500/50 uppercase tracking-tighter">
+                            {getInvoiceDisplay(transaction)}
                           </span>
                         </div>
                       </div>

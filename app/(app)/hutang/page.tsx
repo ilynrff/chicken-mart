@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { PaymentMethod, Transaction } from "@/lib/types";
-import { cn, formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, formatDateTime, getInvoiceDisplay } from "@/lib/utils";
 
 type DebtSummary = Transaction & {
   remainingDebt: number;
@@ -202,8 +202,8 @@ export default function HutangPage() {
                           <p className="text-sm font-bold text-slate-300">{formatCurrency(debt.total)}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">ID Transaksi</p>
-                          <p className="text-sm font-bold text-slate-300">#{debt.id.slice(-6).toUpperCase()}</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Invoice</p>
+                          <p className="text-sm font-bold text-slate-300">{getInvoiceDisplay(debt)}</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Tanggal Beli</p>
@@ -325,7 +325,7 @@ export default function HutangPage() {
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="glass-card border border-white/10 text-white p-0 sm:max-w-[500px]">
           <DialogHeader className="p-6 border-b border-white/5 bg-white/5">
-            <DialogTitle className="text-xl font-bold">Detail Transaksi</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Detail Transaksi - {getInvoiceDisplay(selectedDebt)}</DialogTitle>
             <DialogDescription className="text-slate-400 mt-1">Rincian barang dan riwayat cicilan.</DialogDescription>
           </DialogHeader>
           {selectedDebt && (

@@ -62,3 +62,11 @@ export function createId(prefix: string) {
 
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
+
+export function getInvoiceDisplay(transaction: { id: string; invoiceCode?: string | null }) {
+  if (transaction.invoiceCode) return transaction.invoiceCode;
+  
+  // Fallback for legacy UUIDs
+  const shortId = transaction.id.replace("trx-", "").slice(0, 8).toUpperCase();
+  return `CM-OLD-${shortId}`;
+}
