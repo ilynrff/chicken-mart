@@ -186,7 +186,7 @@ export function KasirClient({ initialData }: KasirClientProps) {
         <div className="absolute -top-12 -right-12 size-[300px] bg-red-600/5 rounded-full opacity-40" />
       </div>
 
-      <div className="relative z-10 flex flex-col xl:flex-row gap-8 h-[calc(100vh-160px)] min-h-0">
+      <div className="relative z-10 flex flex-col xl:flex-row gap-8 h-full min-h-0">
         {/* LEFT: PRODUCT SECTION */}
         <div className="flex-1 min-w-0 flex flex-col min-h-0 space-y-6">
           <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

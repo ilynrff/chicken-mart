@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { data, isReady } = useData();
 
   return (
-    <div className="flex min-h-screen bg-transparent text-slate-200">
+    <div className={cn("flex min-h-screen bg-transparent text-slate-200", pathname === "/kasir" && "h-screen overflow-hidden")}>
       {/* 1. SIDEBAR (left, glass style) */}
       <aside className="hidden w-56 flex-col justify-between glass-panel border-y-0 border-l-0 border-r border-white/5 md:flex sticky top-0 h-screen z-40 shrink-0">
         <div>
@@ -125,7 +125,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-8 pb-24 md:pb-8 flex flex-col">
+        <main className={cn(
+          "flex-1 p-4 sm:p-8 pb-24 md:pb-8 flex flex-col min-h-0",
+          pathname === "/kasir" && "h-[calc(100vh-100px)] overflow-hidden sm:p-6 md:pb-6"
+        )}>
           {isReady ? (
             data ? (
               <PageTransition>{children}</PageTransition>
