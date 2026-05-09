@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PaymentMethod, Product, BootstrapData } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 
 type CartLine = {
   product: Product;
@@ -44,8 +45,6 @@ export function KasirClient({ initialData }: KasirClientProps) {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Windowed rendering
@@ -118,8 +117,6 @@ export function KasirClient({ initialData }: KasirClientProps) {
   const invalidItem = cartItems.find((item) => item.qty > item.product.stock);
 
   const addToCart = useCallback((productId: string) => {
-    setError(null);
-    setSuccess(null);
     setCart((current) => ({ ...current, [productId]: (current[productId] ?? 0) + 1 }));
   }, []);
 
@@ -136,20 +133,19 @@ export function KasirClient({ initialData }: KasirClientProps) {
 
   const handleCheckout = async () => {
     if (!cartItems.length) {
-      setError("Keranjang masih kosong.");
+      toast.error("Keranjang Kosong", { description: "Pilih minimal satu produk untuk checkout." });
       return;
     }
     if (invalidItem) {
-      setError(`Stok ${invalidItem.product.name} tidak cukup.`);
+      toast.error("Stok Tidak Cukup", { description: `Stok ${invalidItem.product.name} tidak cukup.` });
       return;
     }
     if (paymentMethod === "Hutang" && !customerName.trim()) {
-      setError("Nama pelanggan wajib diisi untuk Hutang.");
+      toast.error("Nama Pelanggan Wajib", { description: "Nama pelanggan harus diisi untuk transaksi Hutang." });
       return;
     }
     
     setIsSubmitting(true);
-    setError(null);
     try {
       const transaction = await createTransaction({
         items: cartItems.map((item) => ({ productId: item.product.id, qty: item.qty })),
@@ -162,9 +158,15 @@ export function KasirClient({ initialData }: KasirClientProps) {
       setCustomerName("");
       setCustomerPhone("");
       setDueDate("");
-      setSuccess(`Checkout berhasil. Total ${formatCurrency(transaction.total)}.`);
+      toast.success("Checkout Berhasil", {
+        description: `Total transaksi ${formatCurrency(transaction.total)} telah dicatat.`,
+        duration: 3000,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Checkout gagal.");
+      toast.error("Checkout Gagal", {
+        description: err instanceof Error ? err.message : "Terjadi kesalahan saat memproses transaksi.",
+        duration: 4500,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -383,38 +385,6 @@ export function KasirClient({ initialData }: KasirClientProps) {
             </div>
           </div>
         </aside>
-      </div>
-
-      {/* FEEDBACK MESSAGES */}
-      <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4 pointer-events-none">
-        <AnimatePresence>
-          {error && (
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-red-500 text-white p-4 rounded-2xl shadow-2xl border border-red-400 flex items-center gap-3 pointer-events-auto mb-4"
-            >
-              <div className="size-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                <X className="size-4" />
-              </div>
-              <p className="text-xs font-bold">{error}</p>
-            </motion.div>
-          )}
-          {success && (
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-emerald-500 text-white p-4 rounded-2xl shadow-2xl border border-emerald-400 flex items-center gap-3 pointer-events-auto"
-            >
-              <div className="size-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                <ChevronRight className="size-4 rotate-90" />
-              </div>
-              <p className="text-xs font-bold">{success}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );

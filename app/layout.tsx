@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import { AppProviders } from "@/components/providers/app-providers";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Chicken Mart",
@@ -16,6 +17,7 @@ export default function RootLayout({
     <html lang="id">
       <body>
         <AppProviders>{children}</AppProviders>
+        <Toaster closeButton position="top-right" richColors expand={false} />
       </body>
     </html>
   );
