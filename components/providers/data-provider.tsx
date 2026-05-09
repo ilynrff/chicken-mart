@@ -34,10 +34,16 @@ type DataContextValue = {
 
 const DataContext = createContext<DataContextValue | null>(null);
 
-export function DataProvider({ children }: { children: React.ReactNode }) {
+export function DataProvider({ 
+  children, 
+  initialData 
+}: { 
+  children: React.ReactNode;
+  initialData?: BootstrapData | null;
+}) {
   const { status } = useAuth();
-  const [data, setData] = useState<BootstrapData | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [data, setData] = useState<BootstrapData | null>(initialData || null);
+  const [isReady, setIsReady] = useState(!!initialData);
   const [isMutating, setIsMutating] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -46,6 +52,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // If we have initial data, we're already ready
+    if (initialData && !data) {
+      setData(initialData);
+      setIsReady(true);
+      return;
+    }
+
     if (status === "loading") {
       setIsReady(false);
       return;
