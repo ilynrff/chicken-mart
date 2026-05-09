@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Product, ProductInput } from "@/lib/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { toast } from "sonner";
 
 function buildForm(defaultMinimumStock: number, defaultCategory = "Sembako"): ProductInput {
   return { name: "", category: defaultCategory, buyPrice: 0, sellPrice: 0, stock: 0, minimumStock: defaultMinimumStock };
@@ -68,11 +69,18 @@ export default function InventarisPage() {
   const submitForm = async () => {
     try {
       setError(null);
-      if (editingProduct) await updateProduct(editingProduct.id, form);
-      else await createProduct(form);
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, form);
+        toast.success(`Berhasil memperbarui ${form.name}`);
+      } else {
+        await createProduct(form);
+        toast.success(`Berhasil menambahkan ${form.name}`);
+      }
       setFormOpen(false);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Gagal menyimpan produk.");
+      const msg = caughtError instanceof Error ? caughtError.message : "Gagal menyimpan produk.";
+      setError(msg);
+      toast.error(msg);
     }
   };
 
@@ -81,9 +89,14 @@ export default function InventarisPage() {
     try {
       setError(null);
       await restockProduct(restockTarget.id, restockQty);
+      toast.success(`Berhasil menambah stok ${restockTarget.name}`);
       setRestockOpen(false);
+      setRestockQty(10);
+      setRestockTarget(null);
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Gagal restock produk.");
+      const msg = caughtError instanceof Error ? caughtError.message : "Gagal restock produk.";
+      setError(msg);
+      toast.error(msg);
     }
   };
 
@@ -382,10 +395,10 @@ export default function InventarisPage() {
             </Button>
             <Button 
               onClick={submitRestock} 
-              disabled={isMutating}
-              className="h-11 px-8 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-[0_4px_15px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.4)] hover:translate-y-[-1px] active:translate-y-[0] transition-all"
+              disabled={isMutating || restockQty <= 0}
+              className="h-11 px-8 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-[0_4px_15px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.4)] hover:translate-y-[-1px] active:translate-y-[0] transition-all disabled:opacity-50 disabled:translate-y-0"
             >
-              Simpan Restock
+              {isMutating ? "Menyimpan..." : "Simpan Restock"}
             </Button>
           </DialogFooter>
         </DialogContent>

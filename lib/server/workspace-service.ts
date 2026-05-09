@@ -482,7 +482,7 @@ export async function restockProductForUser(user: SessionUser, productId: string
   const [updated] = await db
     .update(products)
     .set({
-      stock: sql`${products.stock} + ${qty}`,
+      stock: sql`stock + ${Number(qty)}`,
       updatedAt: new Date().toISOString(),
     })
     .where(and(eq(products.id, productId), eq(products.workspaceId, workspace.id)))

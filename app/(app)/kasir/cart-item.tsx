@@ -19,7 +19,7 @@ export const CartItem = React.memo(({ product, qty, subtotal, onUpdateQty }: Car
       <div className="flex justify-between items-start gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-white truncate">{product.name}</p>
-          <p className="text-xs text-slate-400 mt-1">{formatCurrency(product.sellPrice)} / ea</p>
+          <p className="text-xs text-slate-400 mt-1">{formatCurrency(product.sellPrice)} / item</p>
         </div>
         <Button 
           variant="ghost" 

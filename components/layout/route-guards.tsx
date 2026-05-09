@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import * as React from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
@@ -24,14 +25,19 @@ function Splash({ message }: { message: string }) {
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { status } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (status === "guest") {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && status === "guest") {
       router.replace("/login");
     }
-  }, [router, status]);
+  }, [router, status, mounted]);
 
-  if (status !== "authenticated") {
+  if (!mounted || status !== "authenticated") {
     return <Splash message="Memeriksa sesi login" />;
   }
 
@@ -41,14 +47,19 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 export function GuestOnly({ children }: { children: React.ReactNode }) {
   const { status } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && status === "authenticated") {
       router.replace("/dashboard");
     }
-  }, [router, status]);
+  }, [router, status, mounted]);
 
-  if (status === "loading") {
+  if (!mounted || status === "loading") {
     return <Splash message="Mengecek akses halaman" />;
   }
 
