@@ -15,6 +15,7 @@ import {
   Wallet,
   Activity
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useData } from "@/components/providers/data-provider";
 import { Badge } from "@/components/ui/badge";
@@ -57,9 +58,22 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={{
+        visible: { transition: { staggerChildren: 0.1 } }
+      }}
+      className="space-y-6"
+    >
       {/* Top Grid: Main Chart & Insight */}
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <motion.div 
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          visible: { opacity: 1, y: 0 }
+        }}
+        className="grid gap-6 xl:grid-cols-[1.5fr_1fr]"
+      >
         
         {/* 3. MAIN DASHBOARD CARD */}
         <div className="glass-card flex flex-col overflow-hidden relative">
@@ -176,10 +190,16 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Bottom Grid: Transactions & Stock */}
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      <motion.div 
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          visible: { opacity: 1, y: 0 }
+        }}
+        className="grid gap-6 xl:grid-cols-[1.5fr_1fr]"
+      >
         
         {/* 7. RECENT TRANSACTIONS */}
         <div className="glass-card flex flex-col">
@@ -281,7 +301,7 @@ export default function DashboardPage() {
           </div>
         </div>
         
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { cn, initials } from "@/lib/utils";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useData } from "@/components/providers/data-provider";
+import { PageTransition } from "@/components/layout/page-transition";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -127,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="flex-1 p-4 sm:p-8 pb-24 md:pb-8 flex flex-col">
           {isReady ? (
             data ? (
-              children
+              <PageTransition>{children}</PageTransition>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center mt-12 glass-panel max-w-lg mx-auto w-full border border-white/10 rounded-2xl">
                 <Store className="size-16 text-slate-600 mb-4" />

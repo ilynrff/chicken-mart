@@ -13,6 +13,7 @@ import {
   X,
   ChevronRight,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useData } from "@/components/providers/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -165,120 +166,138 @@ export default function KasirPage() {
 
   return (
     <div className="relative min-h-full p-0 sm:p-0">
-      {/* 0. LOCAL DECORATIVE BACKGROUND (Only for Kasir) */}
+      {/* 0. LOCAL DECORATIVE BACKGROUND (Subtle Accent) */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-5%] left-[-5%] size-[40%] bg-red-600/10 blur-[100px] rounded-full" />
-        <div className="absolute bottom-[-5%] right-[-5%] size-[40%] bg-red-600/5 blur-[80px] rounded-full" />
+        <div className="absolute -top-24 -right-24 size-[500px] bg-red-600/5 blur-[120px] rounded-full opacity-60" />
       </div>
 
-      <div className="relative z-10 grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-8 items-start">
-        <div className="min-w-0 space-y-6 pb-24 xl:pb-8">
-        
+      <div className="relative z-10 flex flex-col xl:flex-row gap-8 h-[calc(100vh-160px)] min-h-0">
+        {/* LEFT: PRODUCT SECTION (Independently Scrollable) */}
+        <div className="flex-1 min-w-0 flex flex-col min-h-0 space-y-6">
           {/* HEADER / INFO SECTION */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-white leading-tight">Kasir Retail</h2>
+              <h2 className="text-2xl font-bold text-white leading-tight tracking-tight">Kasir Retail</h2>
               <p className="text-sm text-slate-400 mt-1">Pilih barang dan atur pesanan pelanggan.</p>
             </div>
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2.5 rounded-xl">
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2.5 rounded-xl backdrop-blur-sm">
               <span className="text-sm font-medium text-slate-400">Total Pembelian:</span>
               <span className="text-xl font-bold text-white">{formatCurrency(total)}</span>
             </div>
           </div>
 
-          {/* SEARCH & FILTER (Premium Refinement) */}
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 flex-shrink-0">
-            {/* Compact Search Box */}
-            <div className="relative group w-full lg:w-60 shrink-0">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-500 group-focus-within:text-red-500 transition-colors" />
-              <input
-                type="text"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Cari menu..."
-                className="h-10 w-full rounded-2xl border border-white/10 bg-white/5 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/40 focus:bg-white/10 transition-all shadow-inner"
-              />
-            </div>
+          {/* SEARCH & FILTER AREA */}
+          <div className="shrink-0 space-y-4">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4">
+              <div className="relative group w-full lg:w-60 shrink-0">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-500 group-focus-within:text-red-500 transition-colors" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Cari menu..."
+                  className="h-10 w-full rounded-2xl border border-white/10 bg-white/5 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/40 focus:bg-white/10 transition-all shadow-inner"
+                />
+              </div>
 
-            {/* Category Chips with Edge Fade */}
-            <div className="relative flex-1 min-w-0">
-              <div 
-                ref={scrollRef}
-                onWheel={handleWheel}
-                onMouseDown={handleMouseDown}
-                onMouseLeave={handleMouseLeave}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-                className={cn(
-                  "flex gap-2 overflow-x-auto hide-scrollbar edge-fade-both py-1 px-4 select-none scroll-smooth",
-                  isDragging ? "cursor-grabbing" : "cursor-grab"
-                )}
-              >
-                {categories.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setCategory(item)}
-                    className={cn(
-                      "h-9 px-5 rounded-full whitespace-nowrap text-xs font-bold uppercase tracking-wider transition-all duration-300 border",
-                      category === item 
-                        ? "bg-gradient-to-r from-red-600 to-red-500 text-white border-red-500/50 shadow-[0_4px_12px_rgba(220,38,38,0.3)] scale-105 z-10" 
-                        : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 hover:border-white/20"
-                    )}
-                  >
-                    {item}
-                  </button>
-                ))}
+              <div className="relative flex-1 min-w-0">
+                <div 
+                  ref={scrollRef}
+                  onWheel={handleWheel}
+                  onMouseDown={handleMouseDown}
+                  onMouseLeave={handleMouseLeave}
+                  onMouseUp={handleMouseUp}
+                  onMouseMove={handleMouseMove}
+                  className={cn(
+                    "flex gap-2 overflow-x-auto hide-scrollbar edge-fade-both py-1 px-4 select-none scroll-smooth",
+                    isDragging ? "cursor-grabbing" : "cursor-grab"
+                  )}
+                >
+                  {categories.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => setCategory(item)}
+                      className={cn(
+                        "h-9 px-5 rounded-full whitespace-nowrap text-xs font-bold uppercase tracking-wider transition-all duration-300 border",
+                        category === item 
+                          ? "bg-gradient-to-r from-red-600 to-red-500 text-white border-red-500/50 shadow-[0_4px_12px_rgba(220,38,38,0.3)] scale-105 z-10" 
+                          : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200 hover:border-white/20"
+                      )}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* PRODUCT GRID */}
-          {filteredProducts.length > 0 ? (
-            <section className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.map((product) => {
-                const isLow = product.stock <= product.minimumStock;
-                return (
-                  <Card key={product.id} className="h-full flex flex-col group glass-card-hover border-white/5 bg-white/5 p-4 rounded-xl">
-                    <div className="flex-1 min-w-0 mb-3">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">{product.category}</p>
-                      <h3 className="line-clamp-2 text-sm font-semibold text-white mb-1.5">{product.name}</h3>
-                      <p className="text-lg font-bold text-white">{formatCurrency(product.sellPrice)}</p>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs mb-3 border-t border-white/5 pt-3">
-                      <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold tracking-wider", isLow ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400")}>
-                        Stok: {product.stock}
-                      </span>
-                      <span className="text-slate-500">Min {product.minimumStock}</span>
-                    </div>
-
-                    <Button
-                      className="w-full h-10 text-xs shadow-none border-white/10 bg-white/10 text-white hover:bg-white/20 transition-all rounded-xl"
-                      onClick={() => addToCart(product.id)}
-                      disabled={product.stock === 0}
+          {/* PRODUCT GRID (Scroll Container) */}
+          <div className="flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar pb-8">
+            {filteredProducts.length > 0 ? (
+              <motion.div 
+                layout
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: { transition: { staggerChildren: 0.05 } }
+                }}
+                className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3"
+              >
+                {filteredProducts.map((product) => {
+                  const isLow = product.stock <= product.minimumStock;
+                  return (
+                    <motion.div
+                      key={product.id}
+                      variants={{
+                        hidden: { opacity: 0, y: 20 },
+                        visible: { opacity: 1, y: 0 }
+                      }}
+                      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     >
-                      <Plus className="size-3 mr-2" />
-                      {product.stock === 0 ? "Habis" : "Tambah"}
-                    </Button>
-                  </Card>
-                );
-              })}
-            </section>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center xl:min-h-0 xl:flex-1">
-              <div className="rounded-full bg-white/5 p-4 mb-3 border border-white/10">
-                <Package className="size-6 text-slate-500" />
+                      <Card className="h-full flex flex-col group glass-card-hover border-white/5 bg-white/5 p-4 rounded-xl">
+                        <div className="flex-1 min-w-0 mb-3">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">{product.category}</p>
+                          <h3 className="line-clamp-2 text-sm font-semibold text-white mb-1.5">{product.name}</h3>
+                          <p className="text-lg font-bold text-white">{formatCurrency(product.sellPrice)}</p>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs mb-3 border-t border-white/5 pt-3">
+                          <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold tracking-wider", isLow ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400")}>
+                            Stok: {product.stock}
+                          </span>
+                          <span className="text-slate-500">Min {product.minimumStock}</span>
+                        </div>
+
+                        <Button
+                          className="w-full h-10 text-xs shadow-none border-white/10 bg-white/10 text-white hover:bg-white/20 transition-all rounded-xl"
+                          onClick={() => addToCart(product.id)}
+                          disabled={product.stock === 0}
+                        >
+                          <Plus className="size-3 mr-2" />
+                          {product.stock === 0 ? "Habis" : "Tambah"}
+                        </Button>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center py-20">
+                <div className="rounded-full bg-white/5 p-4 mb-3 border border-white/10">
+                  <Package className="size-6 text-slate-500" />
+                </div>
+                <p className="text-sm font-medium text-white">Belum ada produk</p>
+                <p className="text-xs text-slate-400 mt-1 max-w-sm">Tambahkan produk baru di halaman Inventaris agar bisa melakukan transaksi.</p>
               </div>
-              <p className="text-sm font-medium text-white">Belum ada produk</p>
-              <p className="text-xs text-slate-400 mt-1 max-w-sm">Tambahkan produk baru di halaman Inventaris agar bisa melakukan transaksi.</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* CART SIDEBAR (Sticky on Desktop) */}
-        <aside className="w-full xl:w-[400px] xl:sticky xl:top-24 z-30 pb-24 xl:pb-0">
-          <Card className="flex flex-col h-[calc(100vh-140px)] border-white/5 bg-white/5 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
+        {/* RIGHT: CART SIDEBAR (Sticky/Fixed) */}
+        <aside className="w-full xl:w-[400px] xl:sticky xl:top-0 shrink-0 z-30">
+          <Card className="flex flex-col h-[calc(100vh-160px)] border-white/5 bg-white/5 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-md">
             {/* Header */}
             <div className="p-5 border-b border-white/5 shrink-0 flex justify-between items-center bg-black/20">
               <div className="flex items-center gap-2 text-white font-bold text-lg">

@@ -25,13 +25,15 @@
     "clsx": "latest",
     "dotenv": "^17.4.0",
     "drizzle-orm": "^0.45.2",
+    "framer-motion": "^12.38.0",
     "lucide-react": "latest",
     "next": "latest",
     "pg": "^8.20.0",
     "react": "latest",
     "react-dom": "latest",
     "recharts": "latest",
-    "tailwind-merge": "latest"
+    "tailwind-merge": "latest",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@better-auth/cli": "^1.4.21",

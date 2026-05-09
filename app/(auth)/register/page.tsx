@@ -14,8 +14,8 @@ import { api } from "@/lib/api";
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
-  const [ownerName, setOwnerName] = useState("Ibu Siti Larasati");
-  const [storeName, setStoreName] = useState("Chicken Mart");
+  const [ownerName, setOwnerName] = useState("");
+  const [storeName, setStoreName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -64,7 +64,8 @@ export default function RegisterPage() {
                       id="ownerName"
                       value={ownerName}
                       onChange={(event) => setOwnerName(event.target.value)}
-                      className="pl-11 h-12 bg-black/20 border-white/10 text-white focus-visible:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50 transition-all rounded-xl"
+                      placeholder="Masukkan nama lengkap Anda"
+                      className="pl-11 h-12 bg-black/20 border-white/10 text-white focus-visible:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50 transition-all rounded-xl placeholder:text-slate-600 placeholder:text-sm"
                       required
                     />
                   </div>
@@ -78,7 +79,8 @@ export default function RegisterPage() {
                       id="storeName"
                       value={storeName}
                       onChange={(event) => setStoreName(event.target.value)}
-                      className="pl-11 h-12 bg-black/20 border-white/10 text-white focus-visible:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50 transition-all rounded-xl"
+                      placeholder="Masukkan nama warung atau toko"
+                      className="pl-11 h-12 bg-black/20 border-white/10 text-white focus-visible:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50 transition-all rounded-xl placeholder:text-slate-600 placeholder:text-sm"
                       required
                     />
                   </div>
@@ -94,7 +96,8 @@ export default function RegisterPage() {
                         type="email"
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
-                        className="pl-11 h-12 bg-black/20 border-white/10 text-white focus-visible:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50 transition-all rounded-xl"
+                        placeholder="nama@email.com"
+                        className="pl-11 h-12 bg-black/20 border-white/10 text-white focus-visible:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50 transition-all rounded-xl placeholder:text-slate-600 placeholder:text-sm"
                         required
                       />
                     </div>
@@ -107,7 +110,8 @@ export default function RegisterPage() {
                         id="phone"
                         value={phone}
                         onChange={(event) => setPhone(event.target.value)}
-                        className="pl-11 h-12 bg-black/20 border-white/10 text-white focus-visible:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50 transition-all rounded-xl"
+                        placeholder="Contoh: 081234567890"
+                        className="pl-11 h-12 bg-black/20 border-white/10 text-white focus-visible:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50 transition-all rounded-xl placeholder:text-slate-600 placeholder:text-sm"
                       />
                     </div>
                   </div>
